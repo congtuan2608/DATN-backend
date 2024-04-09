@@ -1,0 +1,11 @@
+{
+  "tfjsVersion": "1.3.1",
+  "tmVersion": "2.4.7",
+  "packageVersion": "0.8.4-alpha2",
+  "packageName": "@teachablemachine/image",
+  "timeStamp": "2024-03-30T07:03:28.060Z",
+  "userMetadata": {},
+  "modelName": "tm-my-image-model",
+  "labels": ["Chai nhựa", "Túi nilon"],
+  "imageSize": 224
+}
