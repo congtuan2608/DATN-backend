@@ -1,4 +1,8 @@
 node_modules
 .env
-googleVisionKey
-keySSL
+# key google vision
+googleVisionKey.js
+# key https
+cert.pem
+csr.pem
+key.pem
