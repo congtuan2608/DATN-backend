@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default:
-        "https://res.cloudinary.com/dudwjr0ux/image/upload/v1712409434/images/user-avatar_mrfh94.png",
+        "https://res.cloudinary.com/dudwjr0ux/image/upload/v1712904716/assets/user-avatar-2_hhfccz.jpg",
     },
     dateOfBirth: {
       type: Date,
@@ -31,8 +31,8 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["Male", "Female", "Other"],
-      required: true,
+      enum: ["male", "female", "other"],
+      default: "other",
     },
   },
   { timestamps: true }

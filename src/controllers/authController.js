@@ -2,6 +2,9 @@ import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { uploadFile } from "../utils/uploadToCloud.js";
+import fs from "fs";
+import { removeFiles } from "../utils/handleFileLocal.js";
 
 export function generateToken(id) {
   const payload = {
@@ -43,6 +46,18 @@ export const signUpHandler = async (req, res) => {
       email: data.email,
     });
     if (existingUser) return errorHandler(res, "User already exists", 400);
+
+    if (data?.avatar && data?.avatar?.base64) {
+      const buffer = new Buffer.from(data?.avatar?.base64, "base64");
+      // const imageType = data?.avatar?.mimeType.split("/")[1] || "jpg";
+      const imageName = data?.avatar?.fileName || Date.now();
+      const path = `./src/uploads/${Date.now() + imageName}`;
+      fs.writeFileSync(path, buffer);
+      const file = await uploadFile(path, "images");
+      await removeFiles({ path });
+      data.avatar = file?.secure_url || undefined;
+    }
+
     if (!existingUser) {
       const hashedPassword = hashingPassword(data.password);
       data.password = hashedPassword;
@@ -70,10 +85,10 @@ export const loginHandler = async (req, res) => {
     if (!isPasswordValid)
       return errorHandler(res, "Wrong username or password", 404);
 
-    const token = generateToken(existingUser._id);
+    const accessToken = generateToken(existingUser._id);
     const refreshToken = generateRefreshToken(existingUser._id);
     const { password, ...other } = existingUser._doc;
-    return res.status(200).json({ user: other, token, refreshToken });
+    return res.status(200).json({ user: other, accessToken, refreshToken });
   } catch (error) {
     serverErrorHandler(error, res);
   }
