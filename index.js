@@ -16,12 +16,12 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 dotenv.config();
 // configs https
-const options = {
-  key: fs.readFileSync(`./src/configs/keySSL/key.pem`),
-  cert: fs.readFileSync(`./src/configs/keySSL/cert.pem`),
-};
+// const options = {
+//   key: fs.readFileSync(`./src/configs/keySSL/key.pem`),
+//   cert: fs.readFileSync(`./src/configs/keySSL/cert.pem`),
+// };
 const app = express();
-const httpsServer = http.createServer(options, app);
+const httpsServer = http.createServer(app);
 
 app.use(cors());
 app.use(morgan("common"));
