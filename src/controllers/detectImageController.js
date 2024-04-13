@@ -1,5 +1,5 @@
-import vision from "@google-cloud/vision";
-import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
+// import vision from "@google-cloud/vision";
+// import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
 import TeachableMachine from "@sashido/teachablemachine-node";
 import { serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFile } from "../utils/uploadToCloud.js";
