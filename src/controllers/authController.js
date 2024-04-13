@@ -54,8 +54,8 @@ export const signUpHandler = async (req, res) => {
       const path = `./src/uploads/${Date.now() + imageName}`;
       fs.writeFileSync(path, buffer);
       const file = await uploadFile(path, "images");
-      await removeFiles({ path });
       data.avatar = file?.secure_url || undefined;
+      await removeFiles({ path });
     }
 
     if (!existingUser) {
