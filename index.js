@@ -25,7 +25,7 @@ const httpsServer = http.createServer(app);
 
 app.use(cors());
 app.use(morgan("common"));
-app.use(express.json({ limit: "100mb" }));
+app.use(express.json({ limit: "200mb" }));
 app.use(cookieParser());
 app.use(
   bodyParser.urlencoded({

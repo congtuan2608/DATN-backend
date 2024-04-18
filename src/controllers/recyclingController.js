@@ -87,8 +87,10 @@ const uploadFileAndReturn = async (files) => {
 //get all recycling guide
 export const getRecyclingGuideHandler = async (req, res) => {
   try {
-    const { page = 0, limit = 10 } = req.query;
-    const results = await RecyclingGuide.find()
+    const { page = 0, limit = 10, tagId } = req.query;
+    const results = await RecyclingGuide.find(
+      tagId ? { recyclingTypes: { $in: [tagId] } } : {}
+    )
       .populate([
         { path: "author", select: "fullName avatar lastName firstName" },
         { path: "recyclingTypes", select: "typeName recyclingName" },
@@ -123,7 +125,6 @@ export const getByIdRecyclingGuideHandler = async (req, res) => {
 export const createRecyclingGuideHandler = async (req, res) => {
   try {
     const data = req.body;
-
     //check user
     const existingUser = await User.findById(req.user.id);
     if (!existingUser) return errorHandler(res, "User not found", 404);
@@ -168,7 +169,7 @@ export const createRecyclingGuideHandler = async (req, res) => {
       { path: "author", select: "fullName avatar firstName lastName" },
     ]);
 
-    return res.status(200).json(newRecyclingGuide);
+    return res.status(201).json(newRecyclingGuide);
   } catch (error) {
     serverErrorHandler(error, res);
   }

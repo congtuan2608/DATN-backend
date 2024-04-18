@@ -45,17 +45,19 @@ export const signUpHandler = async (req, res) => {
     const existingUser = await User.findOne({
       email: data.email,
     });
-    if (existingUser) return errorHandler(res, "User already exists", 400);
+    if (existingUser)
+      return errorHandler(res, "This email already exists", 400);
 
     if (data?.avatar && data?.avatar?.base64) {
-      const buffer = new Buffer.from(data?.avatar?.base64, "base64");
-      // const imageType = data?.avatar?.mimeType.split("/")[1] || "jpg";
-      const imageName = data?.avatar?.fileName || Date.now();
-      const path = `./src/uploads/${Date.now() + imageName}`;
-      fs.writeFileSync(path, buffer);
-      const file = await uploadFile(path, "images");
-      data.avatar = file?.secure_url || undefined;
-      await removeFiles({ path });
+      if (data?.avatar?.base64.includes(";base64,")) {
+        const file = await uploadFile(data?.avatar?.base64, "images");
+        data.avatar = file?.secure_url || undefined;
+      } else {
+        // handle for phone request
+        const base64String = `data:${data?.avatar?.mimeType};base64,${data?.avatar.base64}`;
+        const file = await uploadFile(base64String, "images");
+        data.avatar = file?.secure_url || undefined;
+      }
     }
 
     if (!existingUser) {
