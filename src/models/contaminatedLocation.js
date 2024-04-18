@@ -7,7 +7,7 @@ const contaminatedLocationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    location: { latitude: String, longitude: String },
+    location: { latitude: Number, longitude: Number },
     address: { type: String, required: true },
     description: String,
     contaminatedType: [

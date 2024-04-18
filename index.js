@@ -1,25 +1,18 @@
 import express from "express";
 import dotenv from "dotenv";
 import http from "http"; //http -> https
-import fs from "fs";
 import cors from "cors";
-import { callGPT } from "./src/utils/GPT.js";
-import FormData from "form-data";
-import axios from "axios";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import detectImageRouter from "./src/routers/detectImageRouter.js";
 import authRouter from "./src/routers/authRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
+import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 dotenv.config();
-// configs https
-// const options = {
-//   key: fs.readFileSync(`./src/configs/keySSL/key.pem`),
-//   cert: fs.readFileSync(`./src/configs/keySSL/cert.pem`),
-// };
+
 const app = express();
 const httpsServer = http.createServer(app);
 
@@ -29,7 +22,7 @@ app.use(express.json({ limit: "200mb" }));
 app.use(cookieParser());
 app.use(
   bodyParser.urlencoded({
-    limit: "100mb",
+    limit: "200mb",
     extended: true,
   })
 );
@@ -38,11 +31,11 @@ app.get("/", async function (req, res) {
   res.send("Welcome to Cong Tuan 🥰😘😝");
 });
 // ===== ROUTER =====
-// app.use('v1/auth', authRouter); // (login, register, ..)
 app.use("/v1/air-quality", airQualityRouter);
 app.use("/v1/detect", detectImageRouter);
 app.use("/v1/auth", authRouter);
 app.use("/v1/recycling", recyclingRouter);
+app.use("/v1/polluted", pollutedRouter);
 
 // connect to mongo database
 (async () => {
