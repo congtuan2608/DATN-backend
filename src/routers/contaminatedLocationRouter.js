@@ -10,6 +10,7 @@ router
   .route("/contaminated-type")
   .post(verifyToken, location.createContaminatedTypeHandler);
 
+router.route("/contaminated-location").get(location.getReportLocationHandler);
 router
   .route("/contaminated-location")
   .post(

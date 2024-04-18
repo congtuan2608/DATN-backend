@@ -49,6 +49,27 @@ const checkExistingContaminatedType = async (res, contaminatedType) => {
   }
 };
 
+export const getReportLocationHandler = async (req, res) => {
+  try {
+    const { page = 0, limit = 10 } = req.query;
+    const results = await ContaminatedLocation.find()
+      .populate([
+        { path: "reportedBy", select: "fullName avatar lastName firstName" },
+        {
+          path: "contaminatedType",
+          select: "contaminatedType contaminatedName",
+        },
+      ])
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json(results);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
 export const createReportLocationHandler = async (req, res) => {
   try {
     const data = req.body;
