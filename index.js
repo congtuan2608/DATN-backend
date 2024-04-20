@@ -11,18 +11,25 @@ import recyclingRouter from "./src/routers/recyclingRouter.js";
 import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import { rateLimit } from "express-rate-limit";
+
 dotenv.config();
 
 const app = express();
 const httpsServer = http.createServer(app);
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 100, // Limit each IP to 100 requests per `window`
+});
 
+app.use(limiter);
 app.use(cors());
 app.use(morgan("common"));
-app.use(express.json({ limit: "200mb" }));
+app.use(express.json({ limit: "1024mb" }));
 app.use(cookieParser());
 app.use(
   bodyParser.urlencoded({
-    limit: "200mb",
+    limit: "1024mb",
     extended: true,
   })
 );
@@ -30,6 +37,7 @@ app.use(
 app.get("/", async function (req, res) {
   res.send("Welcome to Cong Tuan 🥰😘😝");
 });
+
 // ===== ROUTER =====
 app.use("/v1/air-quality", airQualityRouter);
 app.use("/v1/detect", detectImageRouter);

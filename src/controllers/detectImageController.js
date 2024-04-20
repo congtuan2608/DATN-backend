@@ -1,33 +1,34 @@
-// import vision from "@google-cloud/vision";
-// import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
+import vision from "@google-cloud/vision";
+import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
 import TeachableMachine from "@sashido/teachablemachine-node";
 import { serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFile } from "../utils/uploadToCloud.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
+import fs from "fs";
 
 export const detectImage = async (req, res) => {
   try {
     console.log({ ...req.files });
-    // const client = new vision.ImageAnnotatorClient(CONFIG_GOOGLE_COULD);
-    // const request = {
-    //   image: {
-    //     content: fs.readFileSync(req.files[0].path),
-    //   },
-    // };
+    const client = new vision.ImageAnnotatorClient(CONFIG_GOOGLE_COULD);
+    const request = {
+      image: {
+        content: fs.readFileSync(req.files[0].path),
+      },
+    };
     // const [result] = await client.landmarkDetection(req.files[0].path);
-    // const [result] = await client.objectLocalization(request);
-    // const objects = result.localizedObjectAnnotations;
-    // objects.forEach((object) => {
-    //   console.log(`Name: ${object.name}`);
-    //   console.log(`Confidence: ${object.score}`);
-    //   const vertices = object.boundingPoly.normalizedVertices;
-    //   vertices.forEach((v) => console.log(`x: ${v.x}, y:${v.y}`));
-    // });
+    const [result] = await client.objectLocalization(request);
+    const objects = result.localizedObjectAnnotations;
+    objects.forEach((object) => {
+      console.log(`Name: ${object.name}`);
+      console.log(`Confidence: ${object.score}`);
+      const vertices = object.boundingPoly.normalizedVertices;
+      vertices.forEach((v) => console.log(`x: ${v.x}, y:${v.y}`));
+    });
 
     await removeFiles(req.files);
     res.status(200).json(req.files);
   } catch (error) {
-    console.log(error);
+    serverErrorHandler(error, res);
   }
 };
 // loading model

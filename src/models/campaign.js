@@ -13,6 +13,10 @@ const campaignSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    location: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "ContaminatedLocation",
+    },
   },
   { timestamps: true }
 );
