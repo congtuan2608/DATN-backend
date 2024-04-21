@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { uploadFile } from "../utils/uploadToCloud.js";
+import { uploadFile } from "../utils/handleFileCloud.js";
 import fs from "fs";
 import { removeFiles } from "../utils/handleFileLocal.js";
 

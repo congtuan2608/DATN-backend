@@ -2,20 +2,19 @@ import vision from "@google-cloud/vision";
 import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
 import TeachableMachine from "@sashido/teachablemachine-node";
 import { serverErrorHandler } from "../utils/errorHandler.js";
-import { uploadFile } from "../utils/uploadToCloud.js";
+import { uploadFile } from "../utils/handleFileCloud.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
 import fs from "fs";
 
 export const detectImage = async (req, res) => {
   try {
-    console.log({ ...req.files });
+    // console.log({ ...req.files });
     const client = new vision.ImageAnnotatorClient(CONFIG_GOOGLE_COULD);
     const request = {
       image: {
         content: fs.readFileSync(req.files[0].path),
       },
     };
-    // const [result] = await client.landmarkDetection(req.files[0].path);
     const [result] = await client.objectLocalization(request);
     const objects = result.localizedObjectAnnotations;
     objects.forEach((object) => {
@@ -26,7 +25,7 @@ export const detectImage = async (req, res) => {
     });
 
     await removeFiles(req.files);
-    res.status(200).json(req.files);
+    res.status(200).json(objects);
   } catch (error) {
     serverErrorHandler(error, res);
   }

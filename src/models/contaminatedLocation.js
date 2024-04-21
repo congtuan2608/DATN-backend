@@ -31,10 +31,11 @@ const contaminatedLocationSchema = new mongoose.Schema(
       default: 0,
     },
     assets: [
-      {
-        media_type: String, // mp3 mp4 || jpg png ...
-        url: String,
-      },
+      { type: mongoose.Schema.Types.Mixed },
+      // {
+      //   media_type: String, // mp3 mp4 || jpg png ...
+      //   url: String,
+      // },
     ],
     isAnonymous: {
       type: Boolean,

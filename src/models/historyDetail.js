@@ -1,9 +1,9 @@
-import momgoose from "mongoose";
+import mongoose from "mongoose";
 
-const historyDetailSchema = new momgoose.Schema(
+const historyDetailSchema = new mongoose.Schema(
   {
     userId: {
-      type: momgoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
     title: {
@@ -11,14 +11,14 @@ const historyDetailSchema = new momgoose.Schema(
       default: "",
     },
     activityType: {
-      type: momgoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
     description: String,
-    details: { type: momgoose.Schema.Types.Mixed },
+    details: { type: mongoose.Schema.Types.Mixed },
   },
   {
     timestamps: true,
   }
 );
-export default momgoose.model("HistoryDetail", historyDetailSchema);
+export default mongoose.model("HistoryDetail", historyDetailSchema);

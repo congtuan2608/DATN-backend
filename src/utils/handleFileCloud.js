@@ -3,7 +3,7 @@ import { removeFiles } from "./handleFileLocal.js";
 
 export async function uploadFile(file, folder, type) {
   const result = await cloudinary.uploader.upload(file, {
-    folder,
+    folder: process.env.MODE !== "DEV" ? "assets" : folder,
     resource_type: type ?? "auto",
   });
   return result;
@@ -13,11 +13,11 @@ export async function uploadFile(file, folder, type) {
 export async function uploadFileAndReturn(files) {
   const results = await Promise.all(
     files.map(async (file) => {
-      const { secure_url, resource_type } = await uploadFile(
+      const { url, secure_url, resource_type, ...other } = await uploadFile(
         file.path,
         "images"
       );
-      return { url: secure_url, media_type: resource_type };
+      return { ...other, media_type: resource_type, url: secure_url };
     })
   );
   await removeFiles(files);

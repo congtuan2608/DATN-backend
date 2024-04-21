@@ -1,7 +1,7 @@
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import RecyclingType from "../models/recyclingType.js";
 import User from "../models/user.js";
-import { uploadFile, uploadFileAndReturn } from "../utils/uploadToCloud.js";
+import { uploadFile, uploadFileAndReturn } from "../utils/handleFileCloud.js";
 import RecyclingGuide from "../models/recyclingGuide.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
 
@@ -60,12 +60,14 @@ const checkExistingTypes = async (res, recyclingTypes) => {
     await Promise.all(
       recyclingTypes.map(async (type) => {
         const result = await RecyclingType.findById(type);
-        if (!result) return errorHandler(res, "Recycling type not found", 404);
+        if (!result) return false;
+        else return true;
       })
     );
   } else {
     const result = await RecyclingType.findById(recyclingTypes);
-    if (!result) return errorHandler(res, "Recycling type not found", 404);
+    if (!result) return false;
+    else return true;
   }
 };
 
@@ -115,7 +117,8 @@ export const createRecyclingGuideHandler = async (req, res) => {
     if (!existingUser) return errorHandler(res, "User not found", 404);
 
     //check type
-    await checkExistingTypes(res, data.recyclingTypes);
+    const checked = await checkExistingTypes(res, data.recyclingTypes);
+    if (!checked) return errorHandler(res, "Recycling type not found", 404);
 
     // upload image/video to cloud
     if (req.files) {

@@ -1,5 +1,5 @@
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
-import { uploadFileAndReturn } from "../utils/uploadToCloud.js";
+import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
 import User from "../models/user.js";
 import ContaminatedType from "../models/contaminatedType.js";
 import ContaminatedLocation from "../models/contaminatedLocation.js";
@@ -39,13 +39,14 @@ const checkExistingContaminatedType = async (res, contaminatedType) => {
     await Promise.all(
       contaminatedType.map(async (type) => {
         const result = await ContaminatedType.findById(type);
-        if (!result)
-          return errorHandler(res, "Contaminated type not found", 404);
+        if (!result) return false;
+        else return true;
       })
     );
   } else {
     const result = await ContaminatedType.findById(contaminatedType);
-    if (!result) return errorHandler(res, "Contaminated type not found", 404);
+    if (!result) return false;
+    else return true;
   }
 };
 
@@ -79,7 +80,11 @@ export const createReportLocationHandler = async (req, res) => {
     if (!existingUser) return errorHandler(res, "User not found", 404);
 
     //check type
-    await checkExistingContaminatedType(res, data.contaminatedType);
+    const checked = await checkExistingContaminatedType(
+      res,
+      data.contaminatedType
+    );
+    if (!checked) return errorHandler(res, "Contaminated type not found", 404);
 
     // upload image/video to cloud
     if (req.files) {
