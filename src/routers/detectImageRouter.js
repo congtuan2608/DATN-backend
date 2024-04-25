@@ -1,13 +1,19 @@
 import express from "express";
 import {
-  detectImage,
-  imageRecognition,
+  googleVisionDetectHandler,
+  tensorflowDetectHandler,
 } from "../controllers/detectImageController.js";
 import { upload } from "../middlewares/upload.js";
 const router = express.Router();
 
-//get data air-quality
-router.route("/google-vision").post(upload.array("images"), detectImage);
-router.route("/").post(upload.array("images"), imageRecognition);
+// google vision detect
+router
+  .route("/google-vision")
+  .post(upload.array("images"), googleVisionDetectHandler);
+
+// tensorflow detect
+router
+  .route("/tensorflow")
+  .post(upload.array("images"), tensorflowDetectHandler);
 
 export default router;

@@ -10,7 +10,7 @@ const historyDetailSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    activityType: {
+    activity: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },

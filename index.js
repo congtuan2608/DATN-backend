@@ -4,14 +4,16 @@ import http from "http"; //http -> https
 import cors from "cors";
 import mongoose from "mongoose";
 import bodyParser from "body-parser";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
+import { rateLimit } from "express-rate-limit";
+// routers
 import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import detectImageRouter from "./src/routers/detectImageRouter.js";
 import authRouter from "./src/routers/authRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
 import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
-import morgan from "morgan";
-import cookieParser from "cookie-parser";
-import { rateLimit } from "express-rate-limit";
+import tokenRouter from "./src/routers/tokenRouter.js";
 
 dotenv.config();
 
@@ -44,6 +46,7 @@ app.use("/v1/detect", detectImageRouter);
 app.use("/v1/auth", authRouter);
 app.use("/v1/recycling", recyclingRouter);
 app.use("/v1/polluted", pollutedRouter);
+app.use("/v1/token", tokenRouter);
 
 // connect to mongo database
 (async () => {

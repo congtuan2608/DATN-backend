@@ -6,7 +6,7 @@ import { uploadFile } from "../utils/handleFileCloud.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
 import fs from "fs";
 
-export const detectImage = async (req, res) => {
+export const googleVisionDetectHandler = async (req, res) => {
   try {
     // console.log({ ...req.files });
     const client = new vision.ImageAnnotatorClient(CONFIG_GOOGLE_COULD);
@@ -17,13 +17,6 @@ export const detectImage = async (req, res) => {
     };
     const [result] = await client.objectLocalization(request);
     const objects = result.localizedObjectAnnotations;
-    objects.forEach((object) => {
-      console.log(`Name: ${object.name}`);
-      console.log(`Confidence: ${object.score}`);
-      const vertices = object.boundingPoly.normalizedVertices;
-      vertices.forEach((v) => console.log(`x: ${v.x}, y:${v.y}`));
-    });
-
     await removeFiles(req.files);
     res.status(200).json(objects);
   } catch (error) {
@@ -34,7 +27,7 @@ export const detectImage = async (req, res) => {
 const model = new TeachableMachine({
   modelUrl: process.env.URL_TEACHABLE_MACHINE,
 });
-export const imageRecognition = async (req, res) => {
+export const tensorflowDetectHandler = async (req, res) => {
   try {
     //upload file to store
     const uploads = await Promise.all(
