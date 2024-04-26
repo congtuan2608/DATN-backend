@@ -14,7 +14,7 @@ import authRouter from "./src/routers/authRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
 import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
 import tokenRouter from "./src/routers/tokenRouter.js";
-
+import histortRouter from "./src/routers/historyRouter.js";
 dotenv.config();
 
 const app = express();
@@ -47,6 +47,7 @@ app.use("/v1/auth", authRouter);
 app.use("/v1/recycling", recyclingRouter);
 app.use("/v1/polluted", pollutedRouter);
 app.use("/v1/token", tokenRouter);
+app.use("/v1/history", histortRouter);
 
 // connect to mongo database
 (async () => {

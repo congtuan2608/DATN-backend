@@ -3,6 +3,7 @@ import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
 import User from "../models/user.js";
 import ContaminatedType from "../models/contaminatedType.js";
 import ContaminatedLocation from "../models/contaminatedLocation.js";
+import { saveHistoryHandler } from "./historyController.js";
 
 //=========================== Contaminated Location Type =======================================
 
@@ -54,16 +55,16 @@ export const getReportLocationHandler = async (req, res) => {
   try {
     const { page = 0, limit = 10 } = req.query;
     const results = await ContaminatedLocation.find()
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
       .populate([
         { path: "reportedBy", select: "fullName avatar lastName firstName" },
         {
           path: "contaminatedType",
           select: "contaminatedType contaminatedName",
         },
-      ])
-      .limit(limit)
-      .skip(limit * page)
-      .sort({ createdAt: -1 });
+      ]);
 
     return res.status(200).json(results);
   } catch (error) {
@@ -109,6 +110,14 @@ export const createReportLocationHandler = async (req, res) => {
       { path: "reportedBy", select: "fullName avatar firstName lastName" },
     ]);
 
+    // save hisstory
+    const history = {
+      userId: req.user.id,
+      title: "Report Location",
+      description: "User report location",
+      details: { ...newContaminatedLocation, type: "create" },
+    };
+    saveHistoryHandler("report-location", history, res);
     return res.status(201).json(newContaminatedLocation);
   } catch (error) {
     serverErrorHandler(error, res);

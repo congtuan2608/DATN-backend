@@ -13,6 +13,7 @@ const historyDetailSchema = new mongoose.Schema(
     activity: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "Activity",
     },
     description: String,
     details: { type: mongoose.Schema.Types.Mixed },

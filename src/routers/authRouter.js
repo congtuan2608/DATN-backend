@@ -8,6 +8,5 @@ router.route("/sign-up").post(auth.signUpHandler);
 
 router.route("/login").post(auth.loginHandler);
 
-router.get("/", verifyToken, auth.getUserHandler);
-
+router.route("/").get(verifyToken, auth.getUserHandler);
 export default router;

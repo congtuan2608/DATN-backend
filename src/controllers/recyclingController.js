@@ -78,13 +78,13 @@ export const getRecyclingGuideHandler = async (req, res) => {
     const results = await RecyclingGuide.find(
       tagId ? { recyclingTypes: { $in: [tagId] } } : {}
     )
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
       .populate([
         { path: "author", select: "fullName avatar lastName firstName" },
         { path: "recyclingTypes", select: "typeName recyclingName" },
-      ])
-      .limit(limit)
-      .skip(limit * page)
-      .sort({ createdAt: -1 });
+      ]);
 
     return res.status(200).json(results);
   } catch (error) {
@@ -156,7 +156,13 @@ export const createRecyclingGuideHandler = async (req, res) => {
       },
       { path: "author", select: "fullName avatar firstName lastName" },
     ]);
-
+    const history = {
+      userId: req.user.id,
+      title: "Created recycling guide",
+      description: "Created recycling guide",
+      details: { ...newRecyclingGuide, type: "create" },
+    };
+    saveHistoryHandler("recycling", history, res);
     return res.status(201).json(newRecyclingGuide);
   } catch (error) {
     serverErrorHandler(error, res);
@@ -232,7 +238,13 @@ export const updateRecyclingGuideHandler = async (req, res) => {
         }),
       ]);
     }
-
+    const history = {
+      userId: req.user.id,
+      title: "Updated recycling guide",
+      description: "Updated recycling guide",
+      details: { ...newRecyclingGuide, type: "update" },
+    };
+    saveHistoryHandler("recycling", history, res);
     return res.status(200).json(newRecyclingGuide);
   } catch (error) {
     serverErrorHandler(error, res);
@@ -252,6 +264,14 @@ export const deleteRecyclingGuideHandler = async (req, res) => {
 
     if (!deleted) return errorHandler(res, "Guide not found", 404);
 
+    const history = {
+      userId: req.user.id,
+      title: "Deleted recycling guide",
+      description: "Deleted recycling guide",
+      details: { ...deleted, type: "delete" },
+    };
+
+    saveHistoryHandler("recycling", history, res);
     return res.status(200).json("Deleted successfully!");
   } catch (error) {
     serverErrorHandler(error, res);

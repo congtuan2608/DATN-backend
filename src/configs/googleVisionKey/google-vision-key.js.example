@@ -1,0 +1,20 @@
+export const CREDENTIALS = {
+  type: "your type",
+  project_id: "your project_id",
+  private_key_id: "your private_key_id",
+  private_key: "your private_key",
+  client_email: "your client_email",
+  client_id: "your client_id",
+  auth_uri: "your auth_uri",
+  token_uri: "your token_uri",
+  auth_provider_x509_cert_url: "your auth_provider_x509_cert_url",
+  client_x509_cert_url:"your client_x509_cert_url",
+  universe_domain: "your universe_domain",
+  
+};
+export const CONFIG_GOOGLE_COULD = {
+  credentials: {
+    private_key: CREDENTIALS.private_key,
+    client_email: CREDENTIALS.client_email,
+  },
+};
