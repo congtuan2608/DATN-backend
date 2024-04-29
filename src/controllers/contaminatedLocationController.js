@@ -115,7 +115,9 @@ export const createReportLocationHandler = async (req, res) => {
       userId: req.user.id,
       title: "Report Location",
       description: "User report location",
-      details: { ...newContaminatedLocation, type: "create" },
+      details: newContaminatedLocation._id,
+      modelName: "ContaminatedLocation",
+      type: "create",
     };
     saveHistoryHandler("report-location", history, res);
     return res.status(201).json(newContaminatedLocation);

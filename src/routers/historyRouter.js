@@ -15,7 +15,7 @@ router
   .delete(historyController.deleteActivityTypeHandler);
 
 router
-  .route("/:id")
+  .route("/details/:id")
   .get(verifyToken, historyController.getHistoryDetailByIdHandler);
 
 router.route("/").get(verifyToken, historyController.getHistoryHandler);

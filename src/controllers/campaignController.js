@@ -15,7 +15,9 @@ export const createCampainHandler = async (req, res) => {
       userId: req.user.id,
       title: "Created campaign",
       description: "Created campaign successfully",
-      details: { ...doc, type: "create" },
+      details: doc._id,
+      modelName: "Campaign",
+      type: "create",
     };
     saveHistoryHandler("campaign", history, res);
     res.status(201).json(doc);
@@ -26,7 +28,7 @@ export const createCampainHandler = async (req, res) => {
 
 //=========================== Handle Campaign (join, leave) =======================================
 
-export const joinedCampaignHandler = async (req, res) => {
+export const joinCampaignHandler = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -44,7 +46,9 @@ export const joinedCampaignHandler = async (req, res) => {
       userId: req.user.id,
       title: "Joined campaign",
       description: "Joined the campaign",
-      details: { ...doc, type: "create" },
+      details: id,
+      modelName: "Campaign",
+      type: "update",
     };
     saveHistoryHandler("campaign", history, res);
     res.status(201).json("Joined campaign successfully!");
@@ -52,7 +56,7 @@ export const joinedCampaignHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
-export const leavedCampaignHandler = async (req, res) => {
+export const leaveCampaignHandler = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -70,7 +74,9 @@ export const leavedCampaignHandler = async (req, res) => {
       userId: req.user.id,
       title: "Has left the campaign",
       description: "Has left the campaign",
-      details: { ...doc, type: "update" },
+      details: id,
+      modelName: "Campaign",
+      type: "update",
     };
     saveHistoryHandler("campaign", history, res);
     res.status(201).json("Has left campaign successfully!");

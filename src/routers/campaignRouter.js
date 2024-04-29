@@ -4,12 +4,14 @@ import { verifyToken } from "../middlewares/verifyToken.js";
 const router = express.Router();
 
 router
-  .route("/joined-campaign/:id")
-  .get(verifyToken, campaignController.joinedCampaignHandler);
+  .route("/join-campaign/:id")
+  .get(verifyToken, campaignController.joinCampaignHandler);
 router
-  .route("/leaved-campaign/:id")
-  .get(verifyToken, campaignController.leavedCampaignHandler);
+  .route("/leave-campaign/:id")
+  .get(verifyToken, campaignController.leaveCampaignHandler);
 
-router.route("/").post(verifyToken, campaignController.createCampainHandler);
+router
+  .route("/create")
+  .post(verifyToken, campaignController.createCampainHandler);
 
 export default router;

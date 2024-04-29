@@ -97,14 +97,17 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
       },
     ]);
     if (!doc) return errorHandler(res, "History not found", 404);
+    if (req.user.id !== String(doc.userId))
+      return errorHandler(
+        res,
+        "You are not authorized to view this history",
+        403
+      );
 
     await doc.populate([
       {
-        path: "activity",
-        select: "activityName activityType",
-      },
-      {
         path: "details",
+        model: doc.modelName,
         populate: getRelevant(doc.activity.activityType),
       },
     ]);

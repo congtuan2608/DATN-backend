@@ -4,6 +4,7 @@ import User from "../models/user.js";
 import { uploadFile, uploadFileAndReturn } from "../utils/handleFileCloud.js";
 import RecyclingGuide from "../models/recyclingGuide.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
+import { saveHistoryHandler } from "./historyController.js";
 
 export const getRecyclingTypeHandler = async (req, res) => {
   try {
@@ -156,11 +157,14 @@ export const createRecyclingGuideHandler = async (req, res) => {
       },
       { path: "author", select: "fullName avatar firstName lastName" },
     ]);
+
     const history = {
       userId: req.user.id,
       title: "Created recycling guide",
       description: "Created recycling guide",
-      details: { ...newRecyclingGuide, type: "create" },
+      details: newRecyclingGuide._id,
+      modelName: "RecyclingGuide",
+      type: "create",
     };
     saveHistoryHandler("recycling", history, res);
     return res.status(201).json(newRecyclingGuide);
@@ -242,7 +246,9 @@ export const updateRecyclingGuideHandler = async (req, res) => {
       userId: req.user.id,
       title: "Updated recycling guide",
       description: "Updated recycling guide",
-      details: { ...newRecyclingGuide, type: "update" },
+      details: newRecyclingGuide._id,
+      modelName: "RecyclingGuide",
+      type: "update",
     };
     saveHistoryHandler("recycling", history, res);
     return res.status(200).json(newRecyclingGuide);
@@ -268,9 +274,10 @@ export const deleteRecyclingGuideHandler = async (req, res) => {
       userId: req.user.id,
       title: "Deleted recycling guide",
       description: "Deleted recycling guide",
-      details: { ...deleted, type: "delete" },
+      details: req.params.id,
+      modelName: "RecyclingGuide",
+      type: "delete",
     };
-
     saveHistoryHandler("recycling", history, res);
     return res.status(200).json("Deleted successfully!");
   } catch (error) {

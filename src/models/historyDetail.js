@@ -16,6 +16,8 @@ const historyDetailSchema = new mongoose.Schema(
       ref: "Activity",
     },
     description: String,
+    type: String,
+    modelName: String,
     details: { type: mongoose.Schema.Types.Mixed },
   },
   {
