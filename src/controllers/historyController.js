@@ -48,7 +48,7 @@ export const saveHistoryHandler = async (type, data, res) => {
 
     if (!res) return errorHandler(res, "Type history not found", 400);
 
-    const doc = await HistoryDetail.create({
+    await HistoryDetail.create({
       ...data,
       activity: activityResult._id,
     });
@@ -64,9 +64,18 @@ export const getHistoryHandler = async (req, res) => {
     const existingUser = await user.findById(req.user.id);
     if (!existingUser) return errorHandler(res, "User not found", 404);
 
+    let activityResult;
+    if (activity) {
+      activityResult = await ActivityType.findOne({
+        activityType: activity,
+      });
+      if (!activityResult)
+        return errorHandler(res, "Activity type not found", 404);
+    }
+
     const doc = await HistoryDetail.find({
       userId: req.user.id,
-      ...(activity ?? {}),
+      ...(activity ? { activity: activityResult._id } : {}),
     })
       .limit(limit)
       .skip(limit * page)
@@ -97,6 +106,7 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
       },
     ]);
     if (!doc) return errorHandler(res, "History not found", 404);
+
     if (req.user.id !== String(doc.userId))
       return errorHandler(
         res,

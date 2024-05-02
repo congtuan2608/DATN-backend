@@ -1,3 +1,8 @@
 {
-  "explorer.compactFolders": false
+  "explorer.compactFolders": false,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.formatDocument": "explicit",
+    "source.fixAll.eslint": "explicit"
+  }
 }
