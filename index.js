@@ -1,21 +1,21 @@
-import express from "express";
-import dotenv from "dotenv";
-import http from "http"; //http -> https
-import cors from "cors";
-import mongoose from "mongoose";
 import bodyParser from "body-parser";
-import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
 import { rateLimit } from "express-rate-limit";
+import http from "http"; //http -> https
+import mongoose from "mongoose";
+import morgan from "morgan";
 // routers
-import airQualityRouter from "./src/routers/envPollutionRouter.js";
-import detectImageRouter from "./src/routers/detectImageRouter.js";
 import authRouter from "./src/routers/authRouter.js";
-import recyclingRouter from "./src/routers/recyclingRouter.js";
-import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
-import tokenRouter from "./src/routers/tokenRouter.js";
 import canpaignRouter from "./src/routers/campaignRouter.js";
+import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
+import detectImageRouter from "./src/routers/detectImageRouter.js";
+import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import histortRouter from "./src/routers/historyRouter.js";
+import recyclingRouter from "./src/routers/recyclingRouter.js";
+import tokenRouter from "./src/routers/tokenRouter.js";
 dotenv.config();
 
 const app = express();
@@ -28,11 +28,11 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(cors());
 app.use(morgan("common"));
-app.use(express.json({ limit: "1024mb" }));
+app.use(express.json({ limit: "2048mb" }));
 app.use(cookieParser());
 app.use(
   bodyParser.urlencoded({
-    limit: "1024mb",
+    limit: "2048mb",
     extended: true,
   })
 );
