@@ -1,10 +1,8 @@
-import User from "../models/user.js";
-import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import User from "../models/user.js";
+import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFile } from "../utils/handleFileCloud.js";
-import fs from "fs";
-import { removeFiles } from "../utils/handleFileLocal.js";
 
 export function generateToken(id) {
   const payload = {
@@ -60,13 +58,11 @@ export const signUpHandler = async (req, res) => {
       }
     }
 
-    if (!existingUser) {
-      const hashedPassword = hashingPassword(data.password);
-      data.password = hashedPassword;
-      const doc = await User.create(data);
-      const { password, ...other } = doc._doc;
-      return res.status(201).json(other);
-    }
+    const hashedPassword = hashingPassword(data.password);
+    data.password = hashedPassword;
+    const doc = await User.create(data);
+    const { password, ...other } = doc._doc;
+    return res.status(201).json(other);
   } catch (error) {
     serverErrorHandler(error, res);
   }
@@ -103,7 +99,7 @@ export const getUserHandler = async (req, res) => {
       return errorHandler(res, "User not found", 404);
     }
     const { password, ...other } = user._doc;
-    res.status(200).json({ ...other });
+    return res.status(200).json({ ...other });
   } catch (error) {
     serverErrorHandler(error, res);
   }

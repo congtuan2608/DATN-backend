@@ -28,11 +28,11 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(cors());
 app.use(morgan("common"));
-app.use(express.json({ limit: "2048mb" }));
+app.use(express.json({ limit: "1024mb" }));
 app.use(cookieParser());
 app.use(
   bodyParser.urlencoded({
-    limit: "2048mb",
+    limit: "1024mb",
     extended: true,
   })
 );

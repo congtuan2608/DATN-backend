@@ -26,10 +26,6 @@ const contaminatedLocationSchema = new mongoose.Schema(
         "no-need-intervention",
       ],
     },
-    populationDensity: {
-      type: Number,
-      default: 0,
-    },
     assets: [
       { type: mongoose.Schema.Types.Mixed },
       // {
@@ -40,6 +36,11 @@ const contaminatedLocationSchema = new mongoose.Schema(
     isAnonymous: {
       type: Boolean,
       default: false,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "success", "rejected"],
+      default: "pending",
     },
   },
   {

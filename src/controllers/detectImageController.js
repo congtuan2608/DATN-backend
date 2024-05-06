@@ -1,10 +1,10 @@
 import vision from "@google-cloud/vision";
-import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
 import TeachableMachine from "@sashido/teachablemachine-node";
+import fs from "fs";
 import { serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFile } from "../utils/handleFileCloud.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
-import fs from "fs";
+import { CONFIG_GOOGLE_COULD } from "./../configs/googleVisionKey/google-vision-key.js";
 
 export const googleVisionDetectHandler = async (req, res) => {
   try {
@@ -18,7 +18,7 @@ export const googleVisionDetectHandler = async (req, res) => {
     const [result] = await client.objectLocalization(request);
     const objects = result.localizedObjectAnnotations;
     await removeFiles(req.files);
-    res.status(200).json(objects);
+    return res.status(200).json(objects);
   } catch (error) {
     serverErrorHandler(error, res);
   }
@@ -47,7 +47,7 @@ export const tensorflowDetectHandler = async (req, res) => {
     // remove local file when uploaded to cloud
     await removeFiles(req.files);
 
-    res.status(200).json(results);
+    return res.status(200).json(results);
   } catch (error) {
     serverErrorHandler(error, res);
   }

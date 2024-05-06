@@ -1,8 +1,8 @@
+import ContaminatedLocation from "../models/contaminatedLocation.js";
+import ContaminatedType from "../models/contaminatedType.js";
+import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
-import User from "../models/user.js";
-import ContaminatedType from "../models/contaminatedType.js";
-import ContaminatedLocation from "../models/contaminatedLocation.js";
 import { saveHistoryHandler } from "./historyController.js";
 
 //=========================== Contaminated Location Type =======================================
