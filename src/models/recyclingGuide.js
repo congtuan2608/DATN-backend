@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import RecyclingType from "./recyclingType.js";
-import { serverErrorHandler } from "../utils/errorHandler.js";
 
 const recyclingGuide = new mongoose.Schema(
   {
@@ -11,10 +9,11 @@ const recyclingGuide = new mongoose.Schema(
     },
     descriptsion: String,
     assets: [
-      {
-        media_type: String,
-        url: String,
-      },
+      { type: mongoose.Schema.Types.Mixed },
+      // {
+      //   media_type: String,
+      //   url: String,
+      // },
     ],
     recyclingTips: String,
     recyclingTypes: [

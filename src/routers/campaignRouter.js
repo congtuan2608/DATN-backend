@@ -14,4 +14,10 @@ router
   .route("/create")
   .post(verifyToken, campaignController.createCampainHandler);
 
+router
+  .route("/by-id/:id")
+  .get(verifyToken, campaignController.getCampainByIdHandler);
+
+router.route("/").get(verifyToken, campaignController.getCampainHandler);
+
 export default router;

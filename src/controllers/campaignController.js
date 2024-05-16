@@ -1,32 +1,34 @@
 import Campaign from "../models/campaign.js";
+import contaminatedLocation from "../models/contaminatedLocation.js";
+import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { saveHistoryHandler } from "./historyController.js";
 
 export const getCampainHandler = async (req, res) => {
   try {
     const { page = 0, limit = 10 } = req.query;
-    const results = await ContaminatedLocation.find()
+    const results = await Campaign.find()
       .limit(limit)
       .skip(limit * page)
       .sort({ createdAt: -1 })
       .populate([
         { path: "organizer", select: "fullName avatar" },
         { path: "participants", select: "fullName avatar" },
-        {
-          path: "ref",
-          populate: [
-            {
-              path: "reportedBy",
-              model: "User",
-              select: "fullName avatar",
-            },
-            {
-              path: "contaminatedType",
-              model: "ContaminatedType",
-              select: "contaminatedName contaminatedType",
-            },
-          ],
-        },
+        // {
+        //   path: "ref",
+        //   populate: [
+        //     {
+        //       path: "reportedBy",
+        //       model: "User",
+        //       select: "fullName avatar",
+        //     },
+        //     {
+        //       path: "contaminatedType",
+        //       model: "ContaminatedType",
+        //       select: "contaminatedName contaminatedType",
+        //     },
+        //   ],
+        // },
       ]);
     res.status(200).json(results);
   } catch (error) {
@@ -38,7 +40,7 @@ export const getCampainByIdHandler = async (req, res) => {
     const { id } = req.params;
     if (!id) return errorHandler(res, "Id is required", 400);
 
-    const result = await ContaminatedLocation.findById(id).populate([
+    const result = await Campaign.findById(id).populate([
       { path: "organizer", select: "fullName avatar" },
       { path: "participants", select: "fullName avatar" },
       {
@@ -72,6 +74,10 @@ export const createCampainHandler = async (req, res) => {
       ...data,
       organizer: req.user.id,
       participants: [req.user.id],
+    });
+
+    await contaminatedLocation.findByIdAndUpdate(data.ref, {
+      hadCampaign: true,
     });
 
     // save hisstory

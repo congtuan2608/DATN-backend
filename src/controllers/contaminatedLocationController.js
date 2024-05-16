@@ -37,13 +37,14 @@ export const createContaminatedTypeHandler = async (req, res) => {
 
 const checkExistingContaminatedType = async (res, contaminatedType) => {
   if (Array.isArray(contaminatedType)) {
-    await Promise.all(
+    const data = await Promise.all(
       contaminatedType.map(async (type) => {
         const result = await ContaminatedType.findById(type);
         if (!result) return false;
         else return true;
       })
     );
+    return data.includes(false) ? false : true;
   } else {
     const result = await ContaminatedType.findById(contaminatedType);
     if (!result) return false;
@@ -53,7 +54,7 @@ const checkExistingContaminatedType = async (res, contaminatedType) => {
 
 export const getReportLocationHandler = async (req, res) => {
   try {
-    const { page = 0, limit = 10 } = req.query;
+    const { page = 0, limit = 20 } = req.query;
     const results = await ContaminatedLocation.find()
       .limit(limit)
       .skip(limit * page)
@@ -71,7 +72,71 @@ export const getReportLocationHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+export const getReportLocationNearbyHandler = async (req, res) => {
+  try {
+    const { longitude, latitude, distance = 500 } = req.query;
 
+    if (!(longitude && latitude))
+      return errorHandler(res, "longitude & latitude not found", 404);
+
+    const nearbyLocations = await ContaminatedLocation.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          distanceField: "dist.calculated",
+          maxDistance: parseFloat(distance),
+          includeLocs: "dist.location",
+          spherical: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "reportedBy",
+          foreignField: "_id",
+          as: "reportedBy",
+          pipeline: [
+            {
+              $project: {
+                fullName: 1,
+                avatar: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "contaminatedtypes",
+          localField: "contaminatedType",
+          foreignField: "_id",
+          as: "contaminatedType",
+          pipeline: [
+            {
+              $project: {
+                contaminatedType: 1,
+                contaminatedName: 1,
+              },
+            },
+          ],
+        },
+      },
+
+      // {
+      //   $unwind: "$reportedBy",
+      // },
+      // {
+      //   $unwind: "$contaminatedType",
+      // },
+    ]);
+    return res.status(200).json(nearbyLocations);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
 export const createReportLocationHandler = async (req, res) => {
   try {
     const data = req.body;
@@ -93,8 +158,18 @@ export const createReportLocationHandler = async (req, res) => {
     }
     // parse JSON to object
     if (data.location !== "" && typeof data.location === "string") {
-      data.location = JSON.parse(data.location);
+      const locationJSON = JSON.parse(data.location);
+      data.location = {
+        type: data.location?.type || "Point",
+        coordinates: [locationJSON.longitude, locationJSON.latitude],
+      };
+    } else {
+      data.location = {
+        type: data.location?.type || "Point",
+        coordinates: [data.location.longitude, data.location.latitude],
+      };
     }
+
     // create new data
     const newContaminatedLocation = await ContaminatedLocation.create({
       ...data,
@@ -102,13 +177,13 @@ export const createReportLocationHandler = async (req, res) => {
     });
 
     // Get relevant data
-    await newContaminatedLocation.populate([
-      {
-        path: "contaminatedType",
-        select: "_id contaminatedType contaminatedName",
-      },
-      { path: "reportedBy", select: "fullName avatar firstName lastName" },
-    ]);
+    // await newContaminatedLocation.populate([
+    //   {
+    //     path: "contaminatedType",
+    //     select: "_id contaminatedType contaminatedName",
+    //   },
+    //   { path: "reportedBy", select: "fullName avatar firstName lastName" },
+    // ]);
 
     // save hisstory
     const history = {

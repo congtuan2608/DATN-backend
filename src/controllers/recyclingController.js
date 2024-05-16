@@ -1,9 +1,8 @@
-import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
+import RecyclingGuide from "../models/recyclingGuide.js";
 import RecyclingType from "../models/recyclingType.js";
 import User from "../models/user.js";
-import { uploadFile, uploadFileAndReturn } from "../utils/handleFileCloud.js";
-import RecyclingGuide from "../models/recyclingGuide.js";
-import { removeFiles } from "../utils/handleFileLocal.js";
+import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
+import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
 import { saveHistoryHandler } from "./historyController.js";
 
 export const getRecyclingTypeHandler = async (req, res) => {
@@ -123,7 +122,7 @@ export const createRecyclingGuideHandler = async (req, res) => {
 
     // upload image/video to cloud
     if (req.files) {
-      data.assets = await uploadFileAndReturn(req.files);
+      data.assets = await uploadFileAndReturn(req.files, "recycling-guides");
     }
 
     // create new data
@@ -197,7 +196,7 @@ export const updateRecyclingGuideHandler = async (req, res) => {
 
     // upload image/video to cloud
     if (req.files) {
-      data.assets = await uploadFileAndReturn(req.files);
+      data.assets = await uploadFileAndReturn(req.files, "recycling-guides");
     }
 
     // update new data

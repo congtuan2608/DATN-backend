@@ -22,7 +22,7 @@ const app = express();
 const httpsServer = http.createServer(app);
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 100, // Limit each IP to 100 requests per `window`
+  limit: 1000, // Limit each IP to 100 requests per `window`
 });
 
 app.use(limiter);

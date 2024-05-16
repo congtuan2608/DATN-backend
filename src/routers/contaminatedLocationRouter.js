@@ -1,6 +1,6 @@
 import express from "express";
-import { upload } from "../middlewares/upload.js";
 import * as location from "../controllers/contaminatedLocationController.js";
+import { upload } from "../middlewares/upload.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 const router = express.Router();
 
@@ -11,6 +11,11 @@ router
   .post(verifyToken, location.createContaminatedTypeHandler);
 
 router.route("/contaminated-location").get(location.getReportLocationHandler);
+
+router
+  .route("/contaminated-location-nearby")
+  .get(location.getReportLocationNearbyHandler);
+
 router
   .route("/contaminated-location")
   .post(

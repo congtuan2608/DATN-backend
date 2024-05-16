@@ -7,7 +7,19 @@ const contaminatedLocationSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    location: { latitude: Number, longitude: Number },
+    // location: { latitude: Number, longitude: Number },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+        required: true,
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
     address: { type: String, required: true },
     description: String,
     contaminatedType: [
@@ -16,15 +28,6 @@ const contaminatedLocationSchema = new mongoose.Schema(
     severity: {
       type: String,
       enum: ["mild", "moderate", "severe"],
-    },
-    status: {
-      type: String,
-      enum: [
-        "processed",
-        "processing",
-        "need-intervention",
-        "no-need-intervention",
-      ],
     },
     assets: [
       { type: mongoose.Schema.Types.Mixed },
@@ -37,10 +40,14 @@ const contaminatedLocationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    hadCampaign: {
+      type: Boolean,
+      default: false,
+    },
     status: {
       type: String,
-      enum: ["pending", "success", "rejected"],
       default: "pending",
+      enum: ["pending", "success", "rejected"],
     },
   },
   {
@@ -48,6 +55,7 @@ const contaminatedLocationSchema = new mongoose.Schema(
   }
 );
 
+contaminatedLocationSchema.index({ location: "2dsphere" });
 export default mongoose.model(
   "ContaminatedLocation",
   contaminatedLocationSchema
