@@ -53,7 +53,10 @@ export const saveHistoryHandler = async (type, data, res) => {
   try {
     const activityResult = await ActivityType.findOne({ activityType: type });
 
-    if (!res) return errorHandler(res, "Type history not found", 400);
+    if (!activityResult)
+      return console.error({ message: "Activity type not found", status: 404 });
+    if (!res)
+      return console.error({ message: "Type history not found", status: 404 });
 
     await HistoryDetail.create({
       ...data,

@@ -3,6 +3,10 @@ node_modules
 
 # key google vision
 google-vision-key.js
+
+# key google login
+client_secret.json
+train
 # key https
 # cert.pem
 # csr.pem

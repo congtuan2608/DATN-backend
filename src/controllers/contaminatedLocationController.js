@@ -26,6 +26,9 @@ export const createContaminatedTypeHandler = async (req, res) => {
     if (!existingUser.role === "user")
       return errorHandler(res, "You are not allowed to create this guide", 403);
 
+    if (req.file) {
+      data.asset = await uploadFileAndReturn(req.file, "contaminated-type");
+    }
     const result = await ContaminatedType.create(data);
     return res.status(201).json(result);
   } catch (error) {
@@ -63,11 +66,28 @@ export const getReportLocationHandler = async (req, res) => {
         { path: "reportedBy", select: "fullName avatar lastName firstName" },
         {
           path: "contaminatedType",
-          select: "contaminatedType contaminatedName",
+          select: "contaminatedType contaminatedName asset",
         },
       ]);
 
     return res.status(200).json(results);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+export const getReportLocationByIdHandler = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) return errorHandler(res, "Id not found", 404);
+    const result = await ContaminatedLocation.findById(id).populate([
+      { path: "reportedBy", select: "fullName avatar lastName firstName" },
+      {
+        path: "contaminatedType",
+        select: "contaminatedType contaminatedName asset",
+      },
+    ]);
+
+    return res.status(200).json(result);
   } catch (error) {
     serverErrorHandler(error, res);
   }
@@ -119,6 +139,7 @@ export const getReportLocationNearbyHandler = async (req, res) => {
               $project: {
                 contaminatedType: 1,
                 contaminatedName: 1,
+                asset: 1,
               },
             },
           ],

@@ -16,6 +16,7 @@ import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import histortRouter from "./src/routers/historyRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
 import tokenRouter from "./src/routers/tokenRouter.js";
+import userRouter from "./src/routers/userRouter.js";
 dotenv.config();
 
 const app = express();
@@ -42,9 +43,10 @@ app.get("/", async function (req, res) {
 });
 
 // ===== ROUTER =====
+app.use("/v1/auth", authRouter);
+app.use("/v1/user", userRouter);
 app.use("/v1/air-quality", airQualityRouter);
 app.use("/v1/detect", detectImageRouter);
-app.use("/v1/auth", authRouter);
 app.use("/v1/recycling", recyclingRouter);
 app.use("/v1/polluted", pollutedRouter);
 app.use("/v1/token", tokenRouter);

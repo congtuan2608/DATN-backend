@@ -11,6 +11,7 @@ const contaminatedTypeSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    asset: { type: mongoose.Schema.Types.Mixed },
   },
   { timestamps: true }
 );

@@ -1,9 +1,8 @@
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
-import { uploadFile } from "../utils/handleFileCloud.js";
-
 export function generateToken(id) {
   const payload = {
     id,
@@ -15,13 +14,13 @@ export function generateToken(id) {
 
   return jwt.sign(payload, process.env.JWT_SECRET, options);
 }
-export function generateRefreshToken(id) {
+export function generateRefreshToken(id, exp = "30d") {
   const payload = {
     id,
   };
 
   const options = {
-    expiresIn: "30d",
+    expiresIn: exp,
   };
 
   return jwt.sign(payload, process.env.JWT_REFRESH_TOKEN_SECRET, options);
@@ -46,16 +45,8 @@ export const signUpHandler = async (req, res) => {
     if (existingUser)
       return errorHandler(res, "This email already exists", 400);
 
-    if (data?.avatar && data?.avatar?.base64) {
-      if (data?.avatar?.base64.includes(";base64,")) {
-        const file = await uploadFile(data?.avatar?.base64, "images");
-        data.avatar = file?.secure_url || undefined;
-      } else {
-        // handle for phone request
-        const base64String = `data:${data?.avatar?.mimeType};base64,${data?.avatar.base64}`;
-        const file = await uploadFile(base64String, "images");
-        data.avatar = file?.secure_url || undefined;
-      }
+    if (req.file) {
+      data.avatar = await uploadFileAndReturn(req.file, "avatar");
     }
 
     const hashedPassword = hashingPassword(data.password);
@@ -100,6 +91,51 @@ export const getUserHandler = async (req, res) => {
     }
     const { password, ...other } = user._doc;
     return res.status(200).json({ ...other });
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+export const loginWithGoogle = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    const response = await client.verifyIdToken({
+      idToken: idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const { email_verified, name, given_name, family_name, email, picture } =
+      response.payload;
+
+    if (!email_verified)
+      return res.status(400).json("Google login failed. Try again.");
+
+    const user = await User.findOne({ email });
+    if (user) {
+      const accessToken = generateToken(user._id);
+      const refreshToken = generateRefreshToken(user._id);
+      const { password, ...other } = user._doc;
+
+      return res.status(200).json({ user: other, accessToken, refreshToken });
+    } else {
+      const hashedPassword = hashingPassword(email + process.env.JWT_SECRET);
+      const doc = await User.create({
+        firstName: given_name,
+        ...(family_name && { lastName: family_name }),
+        email,
+        avatar: {
+          url: picture,
+          media_type: "image",
+        },
+        password: hashedPassword,
+      });
+
+      const accessToken = generateToken(doc._id);
+      const refreshToken = generateRefreshToken(doc._id);
+      const { password, ...other } = doc;
+
+      return res.status(201).json({ user: other, accessToken, refreshToken });
+    }
   } catch (error) {
     serverErrorHandler(error, res);
   }

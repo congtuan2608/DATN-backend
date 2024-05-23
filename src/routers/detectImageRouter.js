@@ -1,6 +1,7 @@
 import express from "express";
 import {
   googleVisionDetectHandler,
+  roboflowDetectHandler,
   tensorflowDetectHandler,
 } from "../controllers/detectImageController.js";
 import { upload } from "../middlewares/upload.js";
@@ -15,5 +16,7 @@ router
 router
   .route("/tensorflow")
   .post(upload.array("images"), tensorflowDetectHandler);
+
+router.route("/roboflow").post(upload.array("images"), roboflowDetectHandler);
 
 export default router;

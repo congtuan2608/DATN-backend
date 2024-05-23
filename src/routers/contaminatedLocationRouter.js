@@ -8,9 +8,16 @@ router.route("/contaminated-type").get(location.getContaminatedTypeHandler);
 
 router
   .route("/contaminated-type")
-  .post(verifyToken, location.createContaminatedTypeHandler);
+  .post(
+    verifyToken,
+    upload.single("asset"),
+    location.createContaminatedTypeHandler
+  );
 
 router.route("/contaminated-location").get(location.getReportLocationHandler);
+router
+  .route("/contaminated-location/:id")
+  .get(location.getReportLocationByIdHandler);
 
 router
   .route("/contaminated-location-nearby")
