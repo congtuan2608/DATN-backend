@@ -54,6 +54,38 @@ export const tensorflowDetectHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+const returnFontSizes = (width, height) => {
+  if (width < 100) return "10px";
+  if (width < 200) return "15px";
+  if (width < 300) return "20px";
+  if (width < 400) return "25px";
+  if (width < 500) return "30px";
+  if (width < 600) return "35px";
+  if (width < 700) return "40px";
+  if (width < 800) return "45px";
+  if (width < 900) return "50px";
+  if (width < 1000) return "55px";
+  if (width < 1100) return "60px";
+  if (width < 1200) return "65px";
+  if (width < 1300) return "70px";
+  if (width < 1400) return "75px";
+  if (width < 1500) return "80px";
+  if (width < 1600) return "85px";
+  if (width < 1700) return "90px";
+  if (width < 1800) return "95px";
+  if (width < 1900) return "100px";
+
+  return "105px";
+};
+const returnLineWidth = (width, height) => {
+  if (width < 100) return 3;
+  if (width < 200) return 4;
+  if (width < 300) return 5;
+  if (width < 400) return 6;
+  if (width < 500) return 7;
+  if (width < 600) return 8;
+  return 9;
+};
 export const roboflowDetectHandler = async (req, res) => {
   try {
     const { confidence = 5, overlap = 5 } = req.body;
@@ -99,22 +131,25 @@ export const roboflowDetectHandler = async (req, res) => {
         );
 
         result?.data.predictions.forEach((prediction) => {
+          const left = prediction.x - prediction.width / 2;
+          const top = prediction.y - prediction.height / 2;
           const color = getRandomColor();
           context.beginPath();
-          context.rect(
-            prediction.x,
-            prediction.y,
-            prediction.width,
-            prediction.height
+          context.rect(left, top, prediction.width, prediction.height);
+          context.lineWidth = returnLineWidth(
+            imgCanvas.width,
+            imgCanvas.height
           );
-          context.lineWidth = 2;
           context.strokeStyle = color;
           context.fillStyle = color;
           context.stroke();
           // Add text inside the rectangle
-          context.font = "20px Arial";
+          context.font = `${returnFontSizes(
+            imgCanvas.width,
+            imgCanvas.height
+          )} Arial`;
           context.fillStyle = color;
-          context.fillText(prediction.class, prediction.x, prediction.y - 5);
+          context.fillText(prediction.class, left, top + 70);
         });
 
         const out = fs.createWriteStream(`${img.path}.png`);
