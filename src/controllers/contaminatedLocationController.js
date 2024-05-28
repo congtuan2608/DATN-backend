@@ -1,10 +1,12 @@
+import axios from "axios";
+import fs from "fs";
 import ContaminatedLocation from "../models/contaminatedLocation.js";
 import ContaminatedType from "../models/contaminatedType.js";
 import User from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
+import { removeFiles } from "../utils/handleFileLocal.js";
 import { saveHistoryHandler } from "./historyController.js";
-
 //=========================== Contaminated Location Type =======================================
 
 export const getContaminatedTypeHandler = async (req, res) => {
@@ -94,7 +96,7 @@ export const getReportLocationByIdHandler = async (req, res) => {
 };
 export const getReportLocationNearbyHandler = async (req, res) => {
   try {
-    const { longitude, latitude, distance = 500 } = req.query;
+    const { longitude, latitude, distance = 1000 } = req.query;
 
     if (!(longitude && latitude))
       return errorHandler(res, "longitude & latitude not found", 404);
@@ -158,6 +160,50 @@ export const getReportLocationNearbyHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+
+// check image exists trash or not
+export const checkImageTrashHandler = async (files, ref) => {
+  try {
+    const results = await Promise.all(
+      files.map(async (img) => {
+        const image = fs.readFileSync(img.path, {
+          encoding: "base64",
+        });
+
+        const result = await axios({
+          method: "POST",
+          url: "https://detect.roboflow.com/garbage-detection-vixig/2",
+          params: {
+            api_key: "dEygFcDyq7JIHkIxf0KP",
+            confidence: 40,
+            overlap: 40,
+          },
+          data: image,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        });
+        return result.data;
+      })
+    );
+    removeFiles(files);
+    if (results.filter((item) => item.predictions.length > 0).length !== 0) {
+      await ContaminatedLocation.findByIdAndUpdate(ref, {
+        status: "success",
+      });
+      console.log("This report has been approved and the images contain trash");
+    } else {
+      await ContaminatedLocation.findByIdAndUpdate(ref, {
+        status: "rejected",
+      });
+      console.log(
+        "This report has been approved and the images contain no trash"
+      );
+    }
+  } catch (error) {
+    console.error({ error });
+  }
+};
 export const createReportLocationHandler = async (req, res) => {
   try {
     const data = req.body;
@@ -175,7 +221,7 @@ export const createReportLocationHandler = async (req, res) => {
 
     // upload image/video to cloud
     if (req.files) {
-      data.assets = await uploadFileAndReturn(req.files);
+      data.assets = await uploadFileAndReturn(req.files, undefined, false);
     }
     // parse JSON to object
     if (data.location !== "" && typeof data.location === "string") {
@@ -196,7 +242,9 @@ export const createReportLocationHandler = async (req, res) => {
       ...data,
       author: req.user.id,
     });
-
+    if (newContaminatedLocation?._id) {
+      checkImageTrashHandler(req.files, newContaminatedLocation?._id);
+    }
     // Get relevant data
     // await newContaminatedLocation.populate([
     //   {

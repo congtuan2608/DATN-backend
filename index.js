@@ -50,7 +50,7 @@ app.use("/v1/detect", detectImageRouter);
 app.use("/v1/recycling", recyclingRouter);
 app.use("/v1/polluted", pollutedRouter);
 app.use("/v1/token", tokenRouter);
-app.use("/v1/canpaign", canpaignRouter);
+app.use("/v1/campaign", canpaignRouter);
 app.use("/v1/history", histortRouter);
 
 // connect to mongo database

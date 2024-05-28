@@ -1,6 +1,7 @@
 import user from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { deleteFile, uploadFileAndReturn } from "../utils/handleFileCloud.js";
+import { comparePassword, hashingPassword } from "./authController.js";
 
 export const getUserHandler = async (req, res) => {
   try {
@@ -16,11 +17,21 @@ export const getUserHandler = async (req, res) => {
 };
 export const updateUserHandler = async (req, res) => {
   try {
-    const data = req.body;
+    const { oldPassword, newPassword, ...data } = req.body;
     const existingUser = await user.findById(req.user.id);
 
     if (!existingUser) {
       return errorHandler(res, "User not found", 404);
+    }
+
+    if (oldPassword && newPassword) {
+      const isPasswordValid = comparePassword(
+        oldPassword,
+        existingUser.password
+      );
+      if (!isPasswordValid) return errorHandler(res, "Wrong password", 400);
+
+      data.password = hashingPassword(newPassword);
     }
 
     if ("avatar" in data) {

@@ -44,7 +44,7 @@ export const getCampainByIdHandler = async (req, res) => {
       { path: "organizer", select: "fullName avatar" },
       { path: "participants", select: "fullName avatar" },
       {
-        path: "ref",
+        path: "reference",
         populate: [
           {
             path: "reportedBy",
@@ -76,7 +76,7 @@ export const createCampainHandler = async (req, res) => {
       participants: [req.user.id],
     });
 
-    await contaminatedLocation.findByIdAndUpdate(data.ref, {
+    await contaminatedLocation.findByIdAndUpdate(data.reference, {
       hadCampaign: true,
     });
 
@@ -173,6 +173,68 @@ export const leaveCampaignHandler = async (req, res) => {
     };
     saveHistoryHandler("campaign", history, res);
     return res.status(201).json("Has left campaign successfully!");
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+export const getCampaignNearbyHandler = async (req, res) => {
+  try {
+    const { longitude, latitude, distance = 1000 } = req.query;
+
+    if (!(longitude && latitude))
+      return errorHandler(res, "Longitude and Latitude are required", 400);
+    const nearbyLocations = await contaminatedLocation.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          distanceField: "dist.calculated",
+          maxDistance: parseFloat(distance),
+          includeLocs: "dist.location",
+        },
+      },
+    ]);
+    const currentDate = new Date();
+    const nearbyCampaigns = await Campaign.find({
+      endDate: { $gt: currentDate },
+      ...(nearbyLocations.length !== 0
+        ? {
+            reference: { $in: nearbyLocations.map((location) => location._id) },
+          }
+        : {}),
+    })
+      .populate([
+        { path: "organizer", select: "fullName avatar" },
+        { path: "participants", select: "fullName avatar" },
+        {
+          path: "reference",
+          populate: [
+            {
+              path: "reportedBy",
+              model: "User",
+              select: "fullName avatar",
+            },
+            {
+              path: "contaminatedType",
+              model: "ContaminatedType",
+              select: "contaminatedName contaminatedType",
+            },
+          ],
+        },
+      ])
+      .sort({ ...(nearbyLocations.length === 0 && { createdAt: -1 }) });
+
+    const mergeData = nearbyCampaigns.map((item) => {
+      return {
+        ...item._doc,
+        dist: nearbyLocations.find(
+          (location) => String(location._id) === String(item.reference._id)
+        ).dist.calculated,
+      };
+    });
+    return res.status(200).json(mergeData);
   } catch (error) {
     serverErrorHandler(error, res);
   }

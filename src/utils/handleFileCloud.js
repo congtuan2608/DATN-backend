@@ -15,13 +15,17 @@ export async function uploadFile(file, folder, type) {
 }
 
 //upload image and return url, media type
-export async function uploadFileAndReturn(files, folder = "images") {
+export async function uploadFileAndReturn(
+  files,
+  folder = "images",
+  isRemove = true
+) {
   const callback = async (file) => {
     const { url, secure_url, resource_type, ...other } = await uploadFile(
       file.path,
       folder
     );
-    removeFiles(file);
+    isRemove && removeFiles(file);
     return { ...other, media_type: resource_type, url: secure_url };
   };
 

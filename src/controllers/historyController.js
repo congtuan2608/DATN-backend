@@ -15,7 +15,7 @@ export const getRelevant = (activity) => {
         {
           path: "contaminatedType",
           model: "ContaminatedType",
-          select: "contaminatedName contaminatedType",
+          select: "contaminatedName contaminatedType asset",
         },
       ];
     case "campaign":
@@ -31,14 +31,14 @@ export const getRelevant = (activity) => {
           select: "fullName avatar",
         },
         {
-          path: "ref",
+          path: "reference",
           model: "ContaminatedLocation",
           populate: [
             { path: "reportedBy", model: "User", select: "fullName avatar" },
             {
               path: "contaminatedType",
               model: "ContaminatedType",
-              select: "contaminatedName contaminatedType",
+              select: "contaminatedName contaminatedType asset",
             },
           ],
         },
@@ -132,7 +132,7 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
         populate: getRelevant(doc.activity.activityType),
       },
     ]);
-
+    console.log(doc);
     return res.status(200).json(doc);
   } catch (error) {
     serverErrorHandler(error, res);

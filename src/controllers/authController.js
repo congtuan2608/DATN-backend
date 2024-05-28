@@ -1,8 +1,11 @@
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
-import User from "../models/user.js";
+import otp from "../models/otp.js";
+import { default as User, default as user } from "../models/user.js";
+import { sendEmailHandler } from "../services/sendEmail.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
+
 export function generateToken(id) {
   const payload = {
     id,
@@ -136,6 +139,79 @@ export const loginWithGoogle = async (req, res) => {
 
       return res.status(201).json({ user: other, accessToken, refreshToken });
     }
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
+export const sendOTPHandler = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const existingUser = await user.findOne({ email });
+    if (!existingUser) {
+      return errorHandler(res, "User not found", 404);
+    }
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await otp.create({ email, otp: hashingPassword(code) });
+    // send email with otp
+    const statusSendEmail = await sendEmailHandler({
+      to: [email],
+      subject: "Reset password",
+      values: { code, type: "otp", fullName: existingUser.fullName },
+    });
+    console.log("Code: ", code);
+    if (!statusSendEmail.success)
+      return errorHandler(res, "Unable to send OTP to this email!", 400);
+
+    return res
+      .status(201)
+      .json({ success: true, message: "Check your email to reset password" });
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
+export const verifyOTPHandler = async (req, res) => {
+  try {
+    const { code, email } = req.body;
+    if (!code) return errorHandler(res, "Code is required", 400);
+
+    const existingEmail = await otp.find({ email });
+
+    if (!existingEmail.length)
+      return errorHandler(res, "This code has expired!", 400);
+
+    const isPasswordValid = comparePassword(
+      code,
+      existingEmail[existingEmail.length - 1].otp
+    );
+    if (!isPasswordValid) return errorHandler(res, "Invalid code", 400);
+
+    return res
+      .status(200)
+      .json({ success: true, message: "OTP code is valid" });
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
+export const resetPasswordHandler = async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email) return errorHandler(res, "Email is required", 400);
+
+    if (!newPassword) return errorHandler(res, "New password is required", 400);
+
+    const result = await user.findOneAndUpdate(
+      { email },
+      { password: hashingPassword(newPassword) }
+    );
+    if (!result) return errorHandler(res, "User not found", 404);
+    const { password, ...other } = result._doc;
+
+    return res.status(200).json(other);
   } catch (error) {
     serverErrorHandler(error, res);
   }

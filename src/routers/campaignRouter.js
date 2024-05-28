@@ -4,6 +4,10 @@ import { verifyToken } from "../middlewares/verifyToken.js";
 const router = express.Router();
 
 router
+  .route("/nearby")
+  .get(verifyToken, campaignController.getCampaignNearbyHandler);
+
+router
   .route("/join-campaign/:id")
   .get(verifyToken, campaignController.joinCampaignHandler);
 router
