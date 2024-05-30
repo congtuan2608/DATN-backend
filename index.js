@@ -14,6 +14,7 @@ import pollutedRouter from "./src/routers/contaminatedLocationRouter.js";
 import detectImageRouter from "./src/routers/detectImageRouter.js";
 import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import histortRouter from "./src/routers/historyRouter.js";
+import paymentRouter from "./src/routers/paymentRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
 import tokenRouter from "./src/routers/tokenRouter.js";
 import userRouter from "./src/routers/userRouter.js";
@@ -52,6 +53,7 @@ app.use("/v1/polluted", pollutedRouter);
 app.use("/v1/token", tokenRouter);
 app.use("/v1/campaign", canpaignRouter);
 app.use("/v1/history", histortRouter);
+app.use("/v1/payment", paymentRouter);
 
 // connect to mongo database
 (async () => {

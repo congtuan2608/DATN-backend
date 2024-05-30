@@ -42,17 +42,17 @@ export const generateEmailTemplate = ({ type, ...values }) => {
                   <tr style="height: 0;">
                     <td >
                         <div 
-                        style="
-                        display: flex; 
-                        align-items: center; 
-                        gap: 10px;">
+                         style="
+                         display: flex;
+                         gap: 10px;">
                             <img
+                            style="padding-right: 10px;"
                             alt=""
                             src="https://res.cloudinary.com/dudwjr0ux/image/upload/v1716881896/public/bygvl4xovtdoxaljroty.png"
                             height="30px"
                             />
                             <span
-                            style="font-size: 16px; line-height: 30px; color: #ffffff;"
+                            style="font-size: 24px; line-height: 30px; color: #ffffff; font-weight: 600;     letter-spacing: 3px;"
                             >Go Green</span>
                         </div>
                     </td>

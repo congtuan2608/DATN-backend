@@ -146,7 +146,8 @@ export const loginWithGoogle = async (req, res) => {
 
 export const sendOTPHandler = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, type } = req.body;
+    //type: email or phone number
     const existingUser = await user.findOne({ email });
     if (!existingUser) {
       return errorHandler(res, "User not found", 404);
@@ -157,16 +158,19 @@ export const sendOTPHandler = async (req, res) => {
     // send email with otp
     const statusSendEmail = await sendEmailHandler({
       to: [email],
-      subject: "Reset password",
+      subject: "OTP Code for Reset Password",
       values: { code, type: "otp", fullName: existingUser.fullName },
+      headers: {
+        "X-MT-Category": "Send OTP",
+      },
     });
     console.log("Code: ", code);
-    if (!statusSendEmail.success)
+    if (!statusSendEmail.isSuccess)
       return errorHandler(res, "Unable to send OTP to this email!", 400);
 
     return res
       .status(201)
-      .json({ success: true, message: "Check your email to reset password" });
+      .json({ isSuccess: true, message: "Check your email to reset password" });
   } catch (error) {
     serverErrorHandler(error, res);
   }
@@ -188,9 +192,11 @@ export const verifyOTPHandler = async (req, res) => {
     );
     if (!isPasswordValid) return errorHandler(res, "Invalid code", 400);
 
+    await otp.deleteMany({ email });
+
     return res
       .status(200)
-      .json({ success: true, message: "OTP code is valid" });
+      .json({ isSuccess: true, message: "OTP code is valid" });
   } catch (error) {
     serverErrorHandler(error, res);
   }

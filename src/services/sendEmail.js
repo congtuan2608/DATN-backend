@@ -4,7 +4,7 @@ import { generateEmailTemplate } from "../utils/emailHTML.js";
 dotenv.config();
 
 export const transporter = nodemailer.createTransport({
-  host: "live.smtp.mailtrap.io", //"sandbox.smtp.mailtrap.io",
+  host: process.env.MAILTRAP_HOST,
   port: 2525,
   auth: {
     user: process.env.MAILTRAP_USERNAME,
@@ -12,7 +12,13 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmailHandler = async ({ to, subject, text, values }) => {
+export const sendEmailHandler = async ({
+  to,
+  subject,
+  text,
+  values,
+  headers,
+}) => {
   try {
     const info = await transporter.sendMail({
       from: `Go Green <${process.env.MAILTRAP_FROM}>`, // sender address
@@ -20,12 +26,15 @@ export const sendEmailHandler = async ({ to, subject, text, values }) => {
       subject: subject ?? "Hello ✔", // Subject line
       text: text ?? "Hello" + (to ?? []).join(", "), // plain text body
       html: generateEmailTemplate(values), // html body
+      headers: {
+        ...headers,
+      },
     });
 
     console.log("Message sent: %s", info.messageId);
-    return { success: true, messageId: info.messageId };
+    return { isSuccess: true, messageId: info.messageId };
   } catch (error) {
     console.error(error);
-    return { success: false, error };
+    return { isSuccess: false, error };
   }
 };

@@ -197,7 +197,7 @@ export const getCampaignNearbyHandler = async (req, res) => {
       },
     ]);
     const currentDate = new Date();
-    const nearbyCampaigns = await Campaign.find({
+    let nearbyCampaigns = await Campaign.find({
       endDate: { $gt: currentDate },
       ...(nearbyLocations.length !== 0
         ? {
@@ -226,12 +226,39 @@ export const getCampaignNearbyHandler = async (req, res) => {
       ])
       .sort({ ...(nearbyLocations.length === 0 && { createdAt: -1 }) });
 
+    // // if nearbyCampaigns is empty, get all campaigns
+    // if (nearbyCampaigns.length === 0) {
+    //   nearbyCampaigns = await Campaign.find({ endDate: { $gt: currentDate } })
+    //     .populate([
+    //       { path: "organizer", select: "fullName avatar" },
+    //       { path: "participants", select: "fullName avatar" },
+    //       {
+    //         path: "reference",
+    //         populate: [
+    //           {
+    //             path: "reportedBy",
+    //             model: "User",
+    //             select: "fullName avatar",
+    //           },
+    //           {
+    //             path: "contaminatedType",
+    //             model: "ContaminatedType",
+    //             select: "contaminatedName contaminatedType",
+    //           },
+    //         ],
+    //       },
+    //     ])
+    //     .limit(10)
+    //     .sort({ createdAt: -1 });
+    //   return res.status(200).json(nearbyCampaigns);
+    // }
+    // merge data
     const mergeData = nearbyCampaigns.map((item) => {
       return {
         ...item._doc,
         dist: nearbyLocations.find(
           (location) => String(location._id) === String(item.reference._id)
-        ).dist.calculated,
+        )?.dist?.calculated,
       };
     });
     return res.status(200).json(mergeData);

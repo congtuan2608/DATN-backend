@@ -14,6 +14,8 @@ const campaignSchema = new mongoose.Schema(
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     limit: { type: Number, default: 30 }, // giới hạn số người tham gia
     fund: { type: Number, default: 0 }, // tiền quỹ
+    currency: { type: String, default: "VND" },
+    alowDonate: { type: Boolean, default: true },
     reference: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ContaminatedLocation",

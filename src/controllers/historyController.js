@@ -56,7 +56,10 @@ export const saveHistoryHandler = async (type, data, res) => {
     if (!activityResult)
       return console.error({ message: "Activity type not found", status: 404 });
     if (!res)
-      return console.error({ message: "Type history not found", status: 404 });
+      return console.error({
+        message: "Cannot save the history. Type history not found",
+        status: 404,
+      });
 
     await HistoryDetail.create({
       ...data,
@@ -64,7 +67,8 @@ export const saveHistoryHandler = async (type, data, res) => {
     });
     return;
   } catch (error) {
-    serverErrorHandler(error, res);
+    console.error(error);
+    // serverErrorHandler(error, res);
   }
 };
 
@@ -125,13 +129,15 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
         403
       );
 
-    await doc.populate([
-      {
-        path: "details",
-        model: doc.modelName,
-        populate: getRelevant(doc.activity.activityType),
-      },
-    ]);
+    if (doc.modelName) {
+      await doc.populate([
+        {
+          path: "details",
+          model: doc.modelName,
+          populate: getRelevant(doc.activity.activityType),
+        },
+      ]);
+    }
     console.log(doc);
     return res.status(200).json(doc);
   } catch (error) {
