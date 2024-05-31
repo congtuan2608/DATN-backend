@@ -5,6 +5,7 @@ import { momoConfig } from "../configs/momo/index.js";
 import { zaloPlayConfig } from "../configs/zalo-pay/index.js";
 import { DOMAIN } from "../constants/index.js";
 import historyDetail from "../models/historyDetail.js";
+import user from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
 import { saveHistoryHandler } from "./historyController.js";
 
@@ -71,7 +72,11 @@ export const createZaloPayHandler = async (req, res) => {
 // MOMO PAYMENT
 export const createMoMoPayHandler = async (req, res) => {
   try {
-    const { amount = "1000", orderInfo } = req.body;
+    const { amount = 1000, orderInfo, otherInfo } = req.body;
+
+    const existingUser = await user.findById(req.user.id);
+
+    if (!existingUser) return errorHandler(res, "User not found", 404); // user info request
 
     const orderId = momoConfig.partnerCode + new Date().getTime();
     const requestId = orderId;
@@ -79,13 +84,25 @@ export const createMoMoPayHandler = async (req, res) => {
     const autoCapture = true;
     const lang = "vi";
 
+    // parse extraData from json to base64
+    const otherData = Buffer.from(
+      JSON.stringify({
+        userId: existingUser._id,
+        email: existingUser.email,
+        phone: existingUser?.phone,
+        otherInfo,
+      })
+    ).toString("base64");
+
+    console.log({ otherData });
     const parammeters = {
       accessKey: momoConfig.accessKey,
       amount,
-      extraData: "",
+      extraData: otherData,
       ipnUrl: `${DOMAIN}/v1/payment/momo/callback`, // sau khi thanh toan xong gui data ve
       orderId,
       orderInfo: orderInfo || "You have donate for campaign",
+      partnerClientId: existingUser._id,
       partnerCode: momoConfig.partnerCode,
       redirectUrl: `${DOMAIN}`, // sau khi thanh toan xong quay ve
       requestId,
@@ -93,8 +110,6 @@ export const createMoMoPayHandler = async (req, res) => {
     };
 
     //before sign HMAC SHA256 with format
-    // accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
-
     const rawSignature = Object.entries(parammeters)
       .reduce((prev, cur, idx) => {
         return (
@@ -117,14 +132,12 @@ export const createMoMoPayHandler = async (req, res) => {
     //json object send to MoMo endpoint
     let requestBody = {
       ...parammeters,
-      partnerName: "Test",
       storeId: "MomoTestStore",
       lang,
       autoCapture,
       orderGroupId,
       signature,
     };
-    delete requestBody.accessKey;
     requestBody = JSON.stringify(requestBody);
 
     const options = {
@@ -138,18 +151,6 @@ export const createMoMoPayHandler = async (req, res) => {
     };
     const result = await axios(options);
 
-    // save history
-    if (result.data?.resultCode === 0) {
-      const history = {
-        userId: req.user.id,
-        title: "Donate for campaign",
-        description: "Donate for campaign",
-        details: { ...result.data, orderInfo, status: "pending" },
-        type: "create",
-      };
-      saveHistoryHandler("payment", history, res);
-    }
-
     return res.status(200).json(result.data);
   } catch (error) {
     serverErrorHandler(error, res);
@@ -158,26 +159,32 @@ export const createMoMoPayHandler = async (req, res) => {
 
 export const momoCallbackHandler = async (req, res) => {
   try {
-    console.log("req.body...............", req.body);
+    console.log("momoCallbackHandler success", req.body);
+    req.body.extraData = JSON.parse(
+      Buffer.from(req.body.extraData, "base64").toString("utf-8")
+    );
     if (req.body?.resultCode === 0 && req.body?.orderId) {
-      await historyDetail.findOneAndUpdate(
-        { "details.orderId": req.body.orderId },
-        {
-          details: { ...req.body, status: "success" },
-        }
-      );
+      // save history
+      const history = {
+        userId: req.body.partnerClientId,
+        title: "Donate for campaign",
+        description: "Successful donation",
+        details: { ...req.body, status: "success", method: "momo" },
+        type: "create",
+      };
+      saveHistoryHandler("payment", history, res);
     } else {
-      await historyDetail.findOneAndUpdate(
-        { "details.orderId": req.body.orderId },
-        {
-          $set: {
-            details: { ...req.body, status: "failed" },
-          },
-        }
-      );
+      const history = {
+        userId: req.body.partnerClientId,
+        title: "Donate for campaign",
+        description: "Donation failed",
+        details: { ...req.body, status: "failed", method: "momo" },
+        type: "create",
+      };
+      saveHistoryHandler("payment", history, res);
     }
 
-    return res.status(200).json(req.body);
+    return res.status(201).json(req.body);
   } catch (error) {
     serverErrorHandler(error, res);
   }
@@ -194,10 +201,17 @@ export const momoTransactionStatusHandler = async (req, res) => {
     if (id) {
       const history = await historyDetail.findById(id);
       if (history) {
-        // rawSignature = `accessKey=${momoConfig.accessKey}&orderId=${history.details.orderId}&partnerCode=MoMo&requestId=${history.details.orderId}`;
         orderId = history.details.orderId;
       }
     }
+
+    const payStatus = await historyDetail.find({
+      "details.orderId": orderId,
+    });
+
+    console.log(payStatus);
+    if (payStatus[payStatus.length - 1]?.details?.resultCode === 0)
+      return res.status(200).json("This transaction has been successful!");
 
     if (orderId) {
       rawSignature = `accessKey=${momoConfig.accessKey}&orderId=${orderId}&partnerCode=${momoConfig.partnerCode}&requestId=${orderId}`;
@@ -230,25 +244,43 @@ export const momoTransactionStatusHandler = async (req, res) => {
 
     const result = await axios(options);
 
+    // parse extraData from base64 to json
+    result.data.extraData = JSON.parse(
+      Buffer.from(result.data?.extraData, "base64").toString("utf-8")
+    );
+
+    if (!req.user?.id) {
+      req.user.id = result.data?.extraData?.userId;
+    }
     if (result.data?.resultCode === 0 && result.data?.orderId) {
-      await historyDetail.findOneAndUpdate(
-        { "details.orderId": result.data.orderId },
-        {
-          details: { ...result.data, status: "success" },
-        }
-      );
+      // await historyDetail.findOneAndUpdate(
+      //   { "details.orderId": result.data.orderId },
+      //   { details: { ...result.data, status: "success" } }
+      // );
+      const history = {
+        userId: req.user.id,
+        title: "Donate for campaign",
+        description: "Successful donation",
+        details: { ...result.data, status: "success", method: "MOMO" },
+        type: "create",
+      };
+      saveHistoryHandler("payment", history, res);
     } else {
-      await historyDetail.findOneAndUpdate(
-        { "details.orderId": result.data.orderId },
-        {
-          $set: {
-            details: { ...result.data, status: "failed" },
-          },
-        }
-      );
+      // await historyDetail.findOneAndUpdate(
+      //   { "details.orderId": result.data.orderId },
+      //   { details: { ...result.data, status: "failed" } }
+      // );
+      const history = {
+        userId: req.user.id,
+        title: "Donate for campaign",
+        description: "Donation failed",
+        details: { ...result.data, status: "failed", method: "MOMO" },
+        type: "create",
+      };
+      saveHistoryHandler("payment", history, res);
     }
 
-    return res.status(200).json(result.data);
+    return res.status(201).json(result.data);
   } catch (error) {
     serverErrorHandler(error, res);
   }

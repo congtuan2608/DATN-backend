@@ -43,6 +43,35 @@ export const getRelevant = (activity) => {
           ],
         },
       ];
+    case "momo":
+      return [
+        {
+          path: "organizer",
+          model: "User",
+          select: "fullName avatar",
+        },
+        {
+          path: "participants",
+          model: "User",
+          select: "fullName avatar",
+        },
+        {
+          path: "reference",
+          model: "ContaminatedLocation",
+          populate: [
+            {
+              path: "reportedBy",
+              model: "User",
+              select: "fullName avatar",
+            },
+            {
+              path: "contaminatedType",
+              model: "ContaminatedType",
+              select: "contaminatedName contaminatedType asset",
+            },
+          ],
+        },
+      ];
     default: {
       return [];
     }
@@ -128,7 +157,9 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
         "You are not authorized to view this history",
         403
       );
-
+    if (doc.details?.method === "momo") {
+      return res.status(200).json(doc);
+    }
     if (doc.modelName) {
       await doc.populate([
         {
@@ -137,9 +168,9 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
           populate: getRelevant(doc.activity.activityType),
         },
       ]);
+      return res.status(200).json(doc);
     }
-    console.log(doc);
-    return res.status(200).json(doc);
+    return res.status(200).json({ data: null });
   } catch (error) {
     serverErrorHandler(error, res);
   }
