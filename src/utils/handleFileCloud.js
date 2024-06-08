@@ -1,10 +1,10 @@
 import cloudinary from "../services/cloudinary.js";
 import { removeFiles } from "./handleFileLocal.js";
 
-export const deleteFile = async (public_id, options) => {
+export async function deleteFile(public_id, options) {
   const result = await cloudinary.uploader.destroy(public_id, options);
   return result;
-};
+}
 
 export async function uploadFile(file, folder, type) {
   const result = await cloudinary.uploader.upload(file, {
@@ -30,7 +30,8 @@ export async function uploadFileAndReturn(
   };
 
   if (!Array.isArray(files)) {
-    return callback(files);
+    const result = await callback(files);
+    return result;
   }
 
   const results = await Promise.all(files.map(async (file) => callback(file)));

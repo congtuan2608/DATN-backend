@@ -59,7 +59,7 @@ export const tensorflowDetectHandler = async (req, res) => {
   }
 };
 
-const returnFontSizes = (width, height) => {
+export const returnFontSizes = (width, height) => {
   if (width < 100) return "10px";
   if (width < 200) return "15px";
   if (width < 300) return "20px";
@@ -79,7 +79,7 @@ const returnFontSizes = (width, height) => {
 
   return "105px";
 };
-const returnLineWidth = (width, height) => {
+export const returnLineWidth = (width, height) => {
   if (width < 100) return 3;
   if (width < 200) return 4;
   if (width < 300) return 5;

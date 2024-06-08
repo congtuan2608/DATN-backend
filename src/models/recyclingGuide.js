@@ -7,7 +7,7 @@ const recyclingGuide = new mongoose.Schema(
       type: String,
       required: true,
     },
-    descriptsion: String,
+    description: String,
     assets: [
       { type: mongoose.Schema.Types.Mixed },
       // {

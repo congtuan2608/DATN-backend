@@ -283,3 +283,34 @@ export const deleteRecyclingGuideHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+
+export const searchRecyclingGuideHandler = async (req, res) => {
+  try {
+    let { q = "", page = 0, limit = 10, tagId } = req.query;
+    q = q.trim().split(" ");
+    const regexQueries = q.map((term) => new RegExp(term, "i"));
+
+    const results = await RecyclingGuide.find({
+      $and: [
+        ...(tagId ? [{ recyclingTypes: { $in: [tagId] } }] : []),
+        {
+          $or: [
+            { title: { $in: regexQueries } },
+            { description: { $in: regexQueries } },
+          ],
+        },
+      ],
+    })
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "author", select: "fullName avatar lastName firstName" },
+        { path: "recyclingTypes", select: "typeName recyclingName" },
+      ]);
+
+    return res.status(200).json(results);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};

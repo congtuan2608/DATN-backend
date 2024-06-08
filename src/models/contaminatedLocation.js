@@ -47,7 +47,10 @@ const contaminatedLocationSchema = new mongoose.Schema(
     status: {
       type: String,
       default: "pending",
-      enum: ["pending", "success", "rejected"],
+      enum: ["pending", "success", "rejected", "failed"],
+    },
+    message: {
+      type: String,
     },
   },
   {

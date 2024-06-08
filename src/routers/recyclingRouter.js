@@ -1,12 +1,14 @@
 import express from "express";
-import { upload } from "../middlewares/upload.js";
 import * as recycling from "../controllers/recyclingController.js";
+import { upload } from "../middlewares/upload.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 const router = express.Router();
 
 // ======================== recycling guide =============================
 // get all guide
 router.route("/recycling-guide").get(recycling.getRecyclingGuideHandler);
+
+router.route("/recycling-search").get(recycling.searchRecyclingGuideHandler);
 
 // get by id guide
 router

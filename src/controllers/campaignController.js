@@ -99,17 +99,31 @@ export const createCampainHandler = async (req, res) => {
 export const updateCampainHandler = async (req, res) => {
   try {
     const { id, ...other } = req.body;
+    console.log(req.body);
     const existingUser = await User.findById(req.user.id);
     if (!existingUser) return errorHandler(res, "User not found", 404);
 
+    const oldDoc = await Campaign.findById(id);
+    if (!oldDoc) return errorHandler(res, "Campaign not found", 404);
+    if (other.reference) {
+      await contaminatedLocation.findByIdAndUpdate(oldDoc.reference, {
+        hadCampaign: false,
+      });
+    }
+
     const newDoc = await Campaign.findByIdAndUpdate(id, other);
+    if (other.reference) {
+      await contaminatedLocation.findByIdAndUpdate(other.reference, {
+        hadCampaign: true,
+      });
+    }
 
     // save hisstory
     const history = {
       userId: req.user.id,
       title: "Update campaign",
       description: "Update campaign successfully",
-      details: doc._id,
+      details: newDoc._id,
       modelName: "Campaign",
       type: "update",
     };

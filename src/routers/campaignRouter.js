@@ -19,6 +19,10 @@ router
   .post(verifyToken, campaignController.createCampainHandler);
 
 router
+  .route("/update")
+  .patch(verifyToken, campaignController.updateCampainHandler);
+
+router
   .route("/by-id/:id")
   .get(verifyToken, campaignController.getCampainByIdHandler);
 

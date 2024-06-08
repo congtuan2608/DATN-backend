@@ -55,4 +55,11 @@ export const GARBAGE_INFO = {
     image:
       "https://res.cloudinary.com/du3xgsxuc/image/upload/v1632784986/other_waste_2x",
   },
+  cardboard: {
+    name: "cardboard",
+    description:
+      "Cardboard is a heavy type of paper used for making boxes and other containers.",
+    image:
+      "https://res.cloudinary.com/du3xgsxuc/image/upload/v1632784986/cardboard_2x",
+  },
 };

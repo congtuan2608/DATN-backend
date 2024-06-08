@@ -1,11 +1,21 @@
 import axios from "axios";
+import { createCanvas, loadImage } from "canvas";
 import fs from "fs";
-import ContaminatedLocation from "../models/contaminatedLocation.js";
+import {
+  default as ContaminatedLocation,
+  default as contaminatedLocation,
+} from "../models/contaminatedLocation.js";
 import ContaminatedType from "../models/contaminatedType.js";
 import User from "../models/user.js";
+import { getRandomColor } from "../utils/color.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
-import { uploadFileAndReturn } from "../utils/handleFileCloud.js";
+import {
+  deleteFile,
+  uploadFile,
+  uploadFileAndReturn,
+} from "../utils/handleFileCloud.js";
 import { removeFiles } from "../utils/handleFileLocal.js";
+import { returnFontSizes, returnLineWidth } from "./detectImageController.js";
 import { saveHistoryHandler } from "./historyController.js";
 //=========================== Contaminated Location Type =======================================
 
@@ -19,6 +29,7 @@ export const getContaminatedTypeHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+
 export const createContaminatedTypeHandler = async (req, res) => {
   try {
     const data = req.body;
@@ -77,6 +88,29 @@ export const getReportLocationHandler = async (req, res) => {
     serverErrorHandler(error, res);
   }
 };
+export const getReportLocationByUserHandler = async (req, res) => {
+  try {
+    const { page = 0, limit = 10, reportedBy } = req.query;
+
+    if (!reportedBy) return errorHandler(res, "ReportedBy is required", 400);
+
+    const results = await ContaminatedLocation.find({ reportedBy })
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "reportedBy", select: "fullName avatar lastName firstName" },
+        {
+          path: "contaminatedType",
+          select: "contaminatedType contaminatedName asset",
+        },
+      ]);
+
+    return res.status(200).json(results);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
 export const getReportLocationByIdHandler = async (req, res) => {
   try {
     const { id } = req.params;
@@ -112,6 +146,11 @@ export const getReportLocationNearbyHandler = async (req, res) => {
           maxDistance: parseFloat(distance),
           includeLocs: "dist.location",
           spherical: true,
+        },
+      },
+      {
+        $match: {
+          status: "success",
         },
       },
       {
@@ -166,41 +205,98 @@ export const checkImageTrashHandler = async (files, ref) => {
   try {
     const results = await Promise.all(
       files.map(async (img) => {
-        const image = fs.readFileSync(img.path, {
-          encoding: "base64",
-        });
-
         const result = await axios({
           method: "POST",
           url: "https://detect.roboflow.com/garbage-detection-vixig/2",
           params: {
             api_key: "dEygFcDyq7JIHkIxf0KP",
-            confidence: 40,
-            overlap: 40,
-          },
-          data: image,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            image: img?.url,
+            confidence: 20,
+            overlap: 20,
           },
         });
-        return result.data;
+
+        const imgCanvas = await loadImage(img?.url);
+
+        const canvas = createCanvas(
+          result?.data?.image.width,
+          result?.data?.image.height
+        );
+        const context = canvas.getContext("2d");
+
+        context.drawImage(
+          imgCanvas,
+          0,
+          0,
+          result?.data?.image.width,
+          result?.data?.image.height
+        );
+        result?.data.predictions.forEach((prediction, index) => {
+          // add rectangle
+          const left = prediction.x - prediction.width / 2;
+          const top = prediction.y - prediction.height / 2;
+          const color = getRandomColor();
+          context.beginPath();
+          context.rect(left, top, prediction.width, prediction.height);
+          context.lineWidth = returnLineWidth(
+            result?.data?.image.width,
+            result?.data?.image.height
+          );
+          context.strokeStyle = color;
+          context.fillStyle = color;
+          context.stroke();
+          // Add text inside the rectangle
+          context.font = `${returnFontSizes(
+            result?.data?.image.width,
+            result?.data?.image.height
+          )} Arial`;
+          context.fillStyle = color;
+          context.fillText(
+            `${prediction.class} (${index + 1})`,
+            left,
+            top + 70
+          );
+        });
+        const out = fs.createWriteStream(
+          `./src/uploads/${img.original_filename}.png`
+        );
+        const stream = canvas.createJPEGStream();
+        stream.pipe(out);
+        const newSrc = await uploadFile(
+          `./src/uploads/${img.original_filename}.png`,
+          "images"
+        );
+
+        await removeFiles([
+          { path: `src\\uploads\\${img.original_filename}.png` },
+        ]);
+        await deleteFile(img.public_id);
+        // last response
+        return { ...newSrc, url: newSrc?.secure_url };
       })
     );
-    removeFiles(files);
-    if (results.filter((item) => item.predictions.length > 0).length !== 0) {
+    if (results.length !== 0) {
       await ContaminatedLocation.findByIdAndUpdate(ref, {
         status: "success",
+        assets: results,
+        message: "This report has been approved and the images contain trash",
       });
       console.log("This report has been approved and the images contain trash");
     } else {
       await ContaminatedLocation.findByIdAndUpdate(ref, {
         status: "rejected",
+        message:
+          "This report has been approved and the images contain no trash",
       });
       console.log(
         "This report has been approved and the images contain no trash"
       );
     }
   } catch (error) {
+    await ContaminatedLocation.findByIdAndUpdate(ref, {
+      status: "failed",
+      message: "An error occurred while checking the image!",
+    });
     console.error({ error });
   }
 };
@@ -242,9 +338,10 @@ export const createReportLocationHandler = async (req, res) => {
       ...data,
       author: req.user.id,
     });
-    if (newContaminatedLocation?._id) {
-      checkImageTrashHandler(req.files, newContaminatedLocation?._id);
+    if (newContaminatedLocation?._id && data.assets) {
+      checkImageTrashHandler(data.assets, newContaminatedLocation?._id);
     }
+    removeFiles(req.files);
     // Get relevant data
     // await newContaminatedLocation.populate([
     //   {
@@ -265,6 +362,38 @@ export const createReportLocationHandler = async (req, res) => {
     };
     saveHistoryHandler("report-location", history, res);
     return res.status(201).json(newContaminatedLocation);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
+export const searchLocationHandler = async (req, res) => {
+  try {
+    let { q = "", page = 0, limit = 10 } = req.query;
+    if (!q) return errorHandler(res, "Query not found", 404);
+    q = q.trim().split(" ");
+    console.log({ q });
+
+    const regexQueries = q.map((term) => new RegExp(term, "i"));
+
+    const results = await contaminatedLocation
+      .find({
+        $or: [
+          { address: { $in: regexQueries } },
+          { description: { $in: regexQueries } },
+        ],
+      })
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "reportedBy", select: "fullName avatar lastName firstName" },
+        {
+          path: "contaminatedType",
+          select: "contaminatedType contaminatedName asset",
+        },
+      ]);
+    return res.status(200).json(results);
   } catch (error) {
     serverErrorHandler(error, res);
   }

@@ -23,6 +23,11 @@ router
   .route("/contaminated-location-nearby")
   .get(location.getReportLocationNearbyHandler);
 
+// search contaminated location
+router
+  .route("/contaminated-location-search")
+  .get(location.searchLocationHandler);
+
 router
   .route("/contaminated-location")
   .post(

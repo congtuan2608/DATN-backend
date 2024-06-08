@@ -170,7 +170,7 @@ export const getHistoryDetailByIdHandler = async (req, res) => {
       ]);
       return res.status(200).json(doc);
     }
-    return res.status(200).json({ data: null });
+    return res.status(200).json(doc);
   } catch (error) {
     serverErrorHandler(error, res);
   }

@@ -4,6 +4,7 @@ import moment from "moment";
 import { momoConfig } from "../configs/momo/index.js";
 import { zaloPlayConfig } from "../configs/zalo-pay/index.js";
 import { DOMAIN } from "../constants/index.js";
+import campaign from "../models/campaign.js";
 import historyDetail from "../models/historyDetail.js";
 import user from "../models/user.js";
 import { errorHandler, serverErrorHandler } from "../utils/errorHandler.js";
@@ -94,7 +95,8 @@ export const createMoMoPayHandler = async (req, res) => {
       })
     ).toString("base64");
 
-    console.log({ otherData });
+    console.log({ orderId });
+
     const parammeters = {
       accessKey: momoConfig.accessKey,
       amount,
@@ -164,6 +166,10 @@ export const momoCallbackHandler = async (req, res) => {
       Buffer.from(req.body.extraData, "base64").toString("utf-8")
     );
     if (req.body?.resultCode === 0 && req.body?.orderId) {
+      await campaign.findByIdAndUpdate(
+        req.body.extraData.otherInfo.campaignId,
+        { $inc: { fund: req.body.amount } }
+      );
       // save history
       const history = {
         userId: req.body.partnerClientId,
@@ -253,10 +259,12 @@ export const momoTransactionStatusHandler = async (req, res) => {
       req.user.id = result.data?.extraData?.userId;
     }
     if (result.data?.resultCode === 0 && result.data?.orderId) {
-      // await historyDetail.findOneAndUpdate(
-      //   { "details.orderId": result.data.orderId },
-      //   { details: { ...result.data, status: "success" } }
-      // );
+      await campaign.findByIdAndUpdate(
+        result.data.extraData.otherInfo.campaignId,
+        {
+          $inc: { fund: result.data.amount },
+        }
+      );
       const history = {
         userId: req.user.id,
         title: "Donate for campaign",
