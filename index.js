@@ -15,9 +15,11 @@ import detectImageRouter from "./src/routers/detectImageRouter.js";
 import airQualityRouter from "./src/routers/envPollutionRouter.js";
 import histortRouter from "./src/routers/historyRouter.js";
 import paymentRouter from "./src/routers/paymentRouter.js";
+import predictionRouter from "./src/routers/predictionRouter.js";
 import recyclingRouter from "./src/routers/recyclingRouter.js";
 import tokenRouter from "./src/routers/tokenRouter.js";
 import userRouter from "./src/routers/userRouter.js";
+import { callGPT } from "./src/utils/GPT.js";
 dotenv.config();
 
 const app = express();
@@ -54,6 +56,11 @@ app.use("/v1/token", tokenRouter);
 app.use("/v1/campaign", canpaignRouter);
 app.use("/v1/history", histortRouter);
 app.use("/v1/payment", paymentRouter);
+app.use("/v1/prediction", predictionRouter);
+app.post("/v1/gpt", async function (req, res) {
+  const result = await callGPT({ text: req.body.text });
+  res.status(200).json(result);
+});
 
 // connect to mongo database
 (async () => {

@@ -99,7 +99,7 @@ export const createCampainHandler = async (req, res) => {
 export const updateCampainHandler = async (req, res) => {
   try {
     const { id, ...other } = req.body;
-    console.log(req.body);
+    console.log(other);
     const existingUser = await User.findById(req.user.id);
     if (!existingUser) return errorHandler(res, "User not found", 404);
 
@@ -111,7 +111,8 @@ export const updateCampainHandler = async (req, res) => {
       });
     }
 
-    const newDoc = await Campaign.findByIdAndUpdate(id, other);
+    const newDoc = await Campaign.findByIdAndUpdate(id, other, { new: true });
+
     if (other.reference) {
       await contaminatedLocation.findByIdAndUpdate(other.reference, {
         hadCampaign: true,
@@ -240,32 +241,6 @@ export const getCampaignNearbyHandler = async (req, res) => {
       ])
       .sort({ ...(nearbyLocations.length === 0 && { createdAt: -1 }) });
 
-    // // if nearbyCampaigns is empty, get all campaigns
-    // if (nearbyCampaigns.length === 0) {
-    //   nearbyCampaigns = await Campaign.find({ endDate: { $gt: currentDate } })
-    //     .populate([
-    //       { path: "organizer", select: "fullName avatar" },
-    //       { path: "participants", select: "fullName avatar" },
-    //       {
-    //         path: "reference",
-    //         populate: [
-    //           {
-    //             path: "reportedBy",
-    //             model: "User",
-    //             select: "fullName avatar",
-    //           },
-    //           {
-    //             path: "contaminatedType",
-    //             model: "ContaminatedType",
-    //             select: "contaminatedName contaminatedType",
-    //           },
-    //         ],
-    //       },
-    //     ])
-    //     .limit(10)
-    //     .sort({ createdAt: -1 });
-    //   return res.status(200).json(nearbyCampaigns);
-    // }
     // merge data
     const mergeData = nearbyCampaigns.map((item) => {
       return {
@@ -276,6 +251,45 @@ export const getCampaignNearbyHandler = async (req, res) => {
       };
     });
     return res.status(200).json(mergeData);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+export const searchCampaignHandler = async (req, res) => {
+  try {
+    let { q = "", page = 0, limit = 10 } = req.query;
+    q = q.trim().split(" ");
+    const regexQueries = q.map((term) => new RegExp(term, "i"));
+
+    const results = await Campaign.find({
+      $or: [
+        { title: { $in: regexQueries } },
+        { description: { $in: regexQueries } },
+      ],
+    })
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 })
+      .populate([
+        { path: "organizer", select: "fullName avatar" },
+        { path: "participants", select: "fullName avatar" },
+        {
+          path: "reference",
+          populate: [
+            {
+              path: "reportedBy",
+              model: "User",
+              select: "fullName avatar",
+            },
+            {
+              path: "contaminatedType",
+              model: "ContaminatedType",
+              select: "contaminatedName contaminatedType",
+            },
+          ],
+        },
+      ]);
+    return res.status(200).json(results);
   } catch (error) {
     serverErrorHandler(error, res);
   }

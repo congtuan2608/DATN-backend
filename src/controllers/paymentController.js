@@ -106,9 +106,9 @@ export const createMoMoPayHandler = async (req, res) => {
       orderInfo: orderInfo || "You have donate for campaign",
       partnerClientId: existingUser._id,
       partnerCode: momoConfig.partnerCode,
-      redirectUrl: `${DOMAIN}`, // sau khi thanh toan xong quay ve
+      redirectUrl: "exp://192.168.1.182:8081" || `${DOMAIN}`, // sau khi thanh toan xong quay ve
       requestId,
-      requestType: "payWithMethod",
+      requestType: "captureWallet", //"linkWallet", //"captureWallet", //"payWithMethod",
     };
 
     //before sign HMAC SHA256 with format
@@ -137,7 +137,7 @@ export const createMoMoPayHandler = async (req, res) => {
       storeId: "MomoTestStore",
       lang,
       autoCapture,
-      orderGroupId,
+      // orderGroupId,
       signature,
     };
     requestBody = JSON.stringify(requestBody);
@@ -217,7 +217,12 @@ export const momoTransactionStatusHandler = async (req, res) => {
 
     console.log(payStatus);
     if (payStatus[payStatus.length - 1]?.details?.resultCode === 0)
-      return res.status(200).json("This transaction has been successful!");
+      return res
+        .status(200)
+        .json({
+          message: "This transaction has been successful!",
+          resultCode: 0,
+        });
 
     if (orderId) {
       rawSignature = `accessKey=${momoConfig.accessKey}&orderId=${orderId}&partnerCode=${momoConfig.partnerCode}&requestId=${orderId}`;

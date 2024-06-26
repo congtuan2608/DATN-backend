@@ -293,12 +293,16 @@ export const searchRecyclingGuideHandler = async (req, res) => {
     const results = await RecyclingGuide.find({
       $and: [
         ...(tagId ? [{ recyclingTypes: { $in: [tagId] } }] : []),
-        {
-          $or: [
-            { title: { $in: regexQueries } },
-            { description: { $in: regexQueries } },
-          ],
-        },
+        ...(q
+          ? [
+              {
+                $or: [
+                  { title: { $in: regexQueries } },
+                  { description: { $in: regexQueries } },
+                ],
+              },
+            ]
+          : []),
       ],
     })
       .limit(limit)
@@ -308,7 +312,6 @@ export const searchRecyclingGuideHandler = async (req, res) => {
         { path: "author", select: "fullName avatar lastName firstName" },
         { path: "recyclingTypes", select: "typeName recyclingName" },
       ]);
-
     return res.status(200).json(results);
   } catch (error) {
     serverErrorHandler(error, res);

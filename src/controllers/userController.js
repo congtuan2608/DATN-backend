@@ -29,7 +29,7 @@ export const updateUserHandler = async (req, res) => {
         oldPassword,
         existingUser.password
       );
-      if (!isPasswordValid) return errorHandler(res, "Wrong password", 400);
+      if (!isPasswordValid) return errorHandler(res, "Wrong old password", 400);
 
       data.password = hashingPassword(newPassword);
     }

@@ -7,6 +7,8 @@ router
   .route("/nearby")
   .get(verifyToken, campaignController.getCampaignNearbyHandler);
 
+router.route("/search").get(campaignController.searchCampaignHandler);
+
 router
   .route("/join-campaign/:id")
   .get(verifyToken, campaignController.joinCampaignHandler);

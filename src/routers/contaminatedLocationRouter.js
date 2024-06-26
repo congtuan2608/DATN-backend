@@ -15,6 +15,10 @@ router
   );
 
 router.route("/contaminated-location").get(location.getReportLocationHandler);
+
+router
+  .route("/contaminated-location-by-user")
+  .get(verifyToken, location.getReportLocationByUserHandler);
 router
   .route("/contaminated-location/:id")
   .get(location.getReportLocationByIdHandler);
@@ -35,5 +39,9 @@ router
     upload.array("assets", 10),
     location.createReportLocationHandler
   );
+
+router
+  .route("/statistical")
+  .get(verifyToken, location.getStatisticalLocationHandler);
 
 export default router;

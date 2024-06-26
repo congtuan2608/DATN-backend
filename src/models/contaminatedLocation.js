@@ -52,6 +52,10 @@ const contaminatedLocationSchema = new mongoose.Schema(
     message: {
       type: String,
     },
+    clean: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

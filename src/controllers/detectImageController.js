@@ -91,12 +91,11 @@ export const returnLineWidth = (width, height) => {
 export const roboflowDetectHandler = async (req, res) => {
   try {
     const { confidence = 5, overlap = 5 } = req.body;
+
     if (req.files.length === 0) return res.status(400).json("No file uploaded");
     const results = await Promise.all(
       req.files.map(async (img) => {
-        const image = fs.readFileSync(img.path, {
-          encoding: "base64",
-        });
+        const image = fs.readFileSync(img.path, { encoding: "base64" });
 
         const result = await axios({
           method: "POST",
@@ -115,10 +114,8 @@ export const roboflowDetectHandler = async (req, res) => {
         imgCanvas.src = fs.readFileSync(img.path);
 
         const canvas = createCanvas(
-          imgCanvas.width,
-          imgCanvas.height
-          // result?.data?.image.width,
-          // result?.data?.image.height
+          result?.data?.image.width,
+          result?.data?.image.height
         );
         const context = canvas.getContext("2d");
 
@@ -126,10 +123,8 @@ export const roboflowDetectHandler = async (req, res) => {
           imgCanvas,
           0,
           0,
-          imgCanvas.width,
-          imgCanvas.height
-          // result?.data?.image.width,
-          // result?.data?.image.height
+          result?.data?.image.width,
+          result?.data?.image.height
         );
 
         result?.data.predictions.forEach((prediction, index) => {
@@ -140,16 +135,16 @@ export const roboflowDetectHandler = async (req, res) => {
           context.beginPath();
           context.rect(left, top, prediction.width, prediction.height);
           context.lineWidth = returnLineWidth(
-            imgCanvas.width,
-            imgCanvas.height
+            result?.data?.image.width,
+            result?.data?.image.height
           );
           context.strokeStyle = color;
           context.fillStyle = color;
           context.stroke();
           // Add text inside the rectangle
           context.font = `${returnFontSizes(
-            imgCanvas.width,
-            imgCanvas.height
+            result?.data?.image.width,
+            result?.data?.image.height
           )} Arial`;
           context.fillStyle = color;
           context.fillText(
@@ -166,12 +161,12 @@ export const roboflowDetectHandler = async (req, res) => {
         });
 
         // save image to local
-        const out = fs.createWriteStream(`${img.path}.png`);
+        const out = fs.createWriteStream(`${img.path}`);
         const stream = canvas.createJPEGStream();
         stream.pipe(out);
-        const newSrc = await uploadFile(`${img.path}.png`, "images");
+        const newSrc = await uploadFile(`${img.path}`, "images");
 
-        await removeFiles([{ path: `${img.path}.png` }, img]);
+        await removeFiles([{ path: `${img.path}` }, img]);
 
         return { ...result.data, src: newSrc.secure_url };
       })

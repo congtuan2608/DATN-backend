@@ -92,9 +92,7 @@ export const getReportLocationByUserHandler = async (req, res) => {
   try {
     const { page = 0, limit = 10, reportedBy } = req.query;
 
-    if (!reportedBy) return errorHandler(res, "ReportedBy is required", 400);
-
-    const results = await ContaminatedLocation.find({ reportedBy })
+    const results = await ContaminatedLocation.find({ reportedBy: req.user.id })
       .limit(limit)
       .skip(limit * page)
       .sort({ createdAt: -1 })
@@ -113,15 +111,19 @@ export const getReportLocationByUserHandler = async (req, res) => {
 };
 export const getReportLocationByIdHandler = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id, page = 0, limit = 10 } = req.params;
     if (!id) return errorHandler(res, "Id not found", 404);
-    const result = await ContaminatedLocation.findById(id).populate([
-      { path: "reportedBy", select: "fullName avatar lastName firstName" },
-      {
-        path: "contaminatedType",
-        select: "contaminatedType contaminatedName asset",
-      },
-    ]);
+    const result = await ContaminatedLocation.findById(id)
+      .populate([
+        { path: "reportedBy", select: "fullName avatar lastName firstName" },
+        {
+          path: "contaminatedType",
+          select: "contaminatedType contaminatedName asset",
+        },
+      ])
+      .limit(limit)
+      .skip(limit * page)
+      .sort({ createdAt: -1 });
 
     return res.status(200).json(result);
   } catch (error) {
@@ -151,6 +153,7 @@ export const getReportLocationNearbyHandler = async (req, res) => {
       {
         $match: {
           status: "success",
+          clean: false,
         },
       },
       {
@@ -219,8 +222,10 @@ export const checkImageTrashHandler = async (files, ref) => {
         const imgCanvas = await loadImage(img?.url);
 
         const canvas = createCanvas(
-          result?.data?.image.width,
-          result?.data?.image.height
+          imgCanvas.width,
+          imgCanvas.height
+          // result?.data?.image.width,
+          // result?.data?.image.height
         );
         const context = canvas.getContext("2d");
 
@@ -228,8 +233,10 @@ export const checkImageTrashHandler = async (files, ref) => {
           imgCanvas,
           0,
           0,
-          result?.data?.image.width,
-          result?.data?.image.height
+          // result?.data?.image.width,
+          // result?.data?.image.height
+          imgCanvas.width,
+          imgCanvas.height
         );
         result?.data.predictions.forEach((prediction, index) => {
           // add rectangle
@@ -239,16 +246,20 @@ export const checkImageTrashHandler = async (files, ref) => {
           context.beginPath();
           context.rect(left, top, prediction.width, prediction.height);
           context.lineWidth = returnLineWidth(
-            result?.data?.image.width,
-            result?.data?.image.height
+            // result?.data?.image.width,
+            // result?.data?.image.height
+            imgCanvas.width,
+            imgCanvas.height
           );
           context.strokeStyle = color;
           context.fillStyle = color;
           context.stroke();
           // Add text inside the rectangle
           context.font = `${returnFontSizes(
-            result?.data?.image.width,
-            result?.data?.image.height
+            // result?.data?.image.width,
+            // result?.data?.image.height
+            imgCanvas.width,
+            imgCanvas.height
           )} Arial`;
           context.fillStyle = color;
           context.fillText(
@@ -268,11 +279,15 @@ export const checkImageTrashHandler = async (files, ref) => {
         );
 
         await removeFiles([
-          { path: `src\\uploads\\${img.original_filename}.png` },
+          { path: `./src/uploads/${img.original_filename}.png` },
         ]);
         await deleteFile(img.public_id);
         // last response
-        return { ...newSrc, url: newSrc?.secure_url };
+        return {
+          ...newSrc,
+          url: newSrc?.secure_url,
+          noTrash: result?.data.predictions.length === 0,
+        };
       })
     );
     if (results.length !== 0) {
@@ -370,10 +385,7 @@ export const createReportLocationHandler = async (req, res) => {
 export const searchLocationHandler = async (req, res) => {
   try {
     let { q = "", page = 0, limit = 10 } = req.query;
-    if (!q) return errorHandler(res, "Query not found", 404);
     q = q.trim().split(" ");
-    console.log({ q });
-
     const regexQueries = q.map((term) => new RegExp(term, "i"));
 
     const results = await contaminatedLocation
@@ -394,6 +406,39 @@ export const searchLocationHandler = async (req, res) => {
         },
       ]);
     return res.status(200).json(results);
+  } catch (error) {
+    serverErrorHandler(error, res);
+  }
+};
+
+export const getStatisticalLocationHandler = async (req, res) => {
+  try {
+    const existingUser = await User.findById(req.user.id);
+    if (!existingUser) return errorHandler(res, "User not found", 404);
+
+    const [total, pending, success, rejected, failed] = await Promise.all([
+      await contaminatedLocation.countDocuments({
+        reportedBy: existingUser._id,
+      }),
+      await contaminatedLocation.countDocuments({
+        status: "pending",
+        reportedBy: existingUser._id,
+      }),
+      await contaminatedLocation.countDocuments({
+        status: "success",
+        reportedBy: existingUser._id,
+      }),
+      await contaminatedLocation.countDocuments({
+        status: "rejected",
+        reportedBy: existingUser._id,
+      }),
+      await contaminatedLocation.countDocuments({
+        status: "failed",
+        reportedBy: existingUser._id,
+      }),
+    ]);
+
+    return res.status(200).json({ total, pending, success, rejected, failed });
   } catch (error) {
     serverErrorHandler(error, res);
   }
